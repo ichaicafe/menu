@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>کافه آی‌چای — منوی دیجیتال</title>
+  <meta name="description" content="منوی دیجیتال کافه آی‌چای — تجربه‌ای ناب از طعم و آرامش">
+
+  <!-- Vazirmatn Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { fa: ['Vazirmatn', 'Tahoma', 'sans-serif'] },
+          colors: {
+            cafe: {
+              black: '#080808',
+              darker: '#0f0d0b',
+              dark: '#1a1410',
+              brown: '#2d2117',
+              'brown-light': '#3d2e1f',
+              gold: '#c9a96e',
+              'gold-light': '#ddc48f',
+              yellow: '#e8c547',
+              cream: '#f0ebe2',
+              white: '#faf8f5',
+              text: '#e8e2d8',
+              'text-muted': '#b0a898',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Alpine.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/main.css">
+</head>
+
+<body class="font-cafe" x-data="cafeMenu" x-cloak>
+
+  <!-- ═══════════════ HERO ═══════════════ -->
+  <section id="hero" class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <p class="text-cafe-gold text-sm font-medium tracking-widest mb-4" style="letter-spacing:0.2em">✦ خوش آمدید ✦</p>
+      <h1 class="hero-title">
+        <span class="gold" x-text="cafeInfo.name">کافه آی‌چای</span>
+      </h1>
+      <div class="hero-divider"></div>
+      <p class="hero-tagline" x-text="cafeInfo.tagline">تجربه‌ای ناب از طعم و آرامش</p>
+      <a href="#menu"
+         class="inline-flex items-center gap-2 mt-6 px-8 py-3 bg-cafe-gold text-cafe-black font-bold rounded-full text-sm hover:bg-cafe-gold-light transition-all duration-300 hover:shadow-lg hover:shadow-cafe-gold/20"
+         @click.prevent="scrollTo('menu')">
+        مشاهده منو
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+      </a>
+    </div>
+    <div class="scroll-indicator">
+      <svg class="w-6 h-6 text-cafe-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ═══════════════ NAVBAR ═══════════════ -->
+  <nav class="navbar">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo -->
+        <a href="#hero" @click.prevent="scrollTo('hero')" class="text-lg font-black text-cafe-gold tracking-tight">
+          <span x-text="cafeInfo.name">کافه آی‌چای</span>
+        </a>
+
+        <!-- Desktop Nav -->
+        <div class="hidden md:flex items-center gap-6">
+          <button @click="scrollTo('menu')" class="text-cafe-text-muted hover:text-cafe-gold transition-colors text-sm font-medium">منو</button>
+          <button @click="scrollTo('featured')" class="text-cafe-text-muted hover:text-cafe-gold transition-colors text-sm font-medium">ویژه‌ها</button>
+          <button @click="scrollTo('about')" class="text-cafe-text-muted hover:text-cafe-gold transition-colors text-sm font-medium">درباره ما</button>
+          <button @click="scrollTo('contact')" class="text-cafe-text-muted hover:text-cafe-gold transition-colors text-sm font-medium">تماس</button>
+        </div>
+
+        <!-- Search + Favorites -->
+        <div class="flex items-center gap-3">
+          <div class="relative hidden sm:block">
+            <svg class="w-4 h-4 text-cafe-text-muted absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input type="text"
+                   class="search-input"
+                   placeholder="جستجو در منو..."
+                   x-model.debounce.300ms="searchQuery"
+                   @focus="activeCategory='cat-1'">
+          </div>
+
+          <!-- Favorite count badge -->
+          <div class="relative text-cafe-text-muted" title="علاقه‌مندی‌ها">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+            <span x-show="favoriteCount > 0"
+                  x-text="toPersianNum(favoriteCount)"
+                  class="absolute -top-2 -left-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold"></span>
+          </div>
+
+          <!-- Mobile menu button -->
+          <button class="md:hidden text-cafe-text-muted" @click="showMobileMenu = !showMobileMenu">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Menu -->
+      <div x-show="showMobileMenu"
+           x-transition:enter="transition ease-out duration-200"
+           x-transition:enter-start="opacity-0 -translate-y-2"
+           x-transition:enter-end="opacity-100 translate-y-0"
+           x-transition:leave="transition ease-in duration-150"
+           x-transition:leave-start="opacity-100"
+           x-transition:leave-end="opacity-0"
+           class="md:hidden pb-4 border-t border-cafe-brown/30 mt-2 pt-3">
+        <!-- Mobile search -->
+        <div class="relative mb-3">
+          <svg class="w-4 h-4 text-cafe-text-muted absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <input type="text" class="search-input w-full" placeholder="جستجو در منو..." x-model.debounce.300ms="searchQuery">
+        </div>
+        <div class="flex flex-col gap-1">
+          <button @click="scrollTo('menu')" class="text-cafe-text-muted hover:text-cafe-gold py-2 text-sm font-medium text-right">منو</button>
+          <button @click="scrollTo('featured')" class="text-cafe-text-muted hover:text-cafe-gold py-2 text-sm font-medium text-right">ویژه‌ها</button>
+          <button @click="scrollTo('about')" class="text-cafe-text-muted hover:text-cafe-gold py-2 text-sm font-medium text-right">درباره ما</button>
+          <button @click="scrollTo('contact')" class="text-cafe-text-muted hover:text-cafe-gold py-2 text-sm font-medium text-right">تماس</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════ FEATURED PRODUCTS ═══════════════ -->
+  <section id="featured" class="py-16 sm:py-24 bg-cafe-black">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="fade-in">
+        <h2 class="section-title">محصولات ویژه</h2>
+        <div class="gold-line"></div>
+        <p class="section-subtitle">بهترین‌های منوی ما، انتخاب سرآشپز</p>
+      </div>
+
+      <!-- Skeleton loaders -->
+      <div x-show="!isLoaded" class="menu-grid">
+        <template x-for="i in 4">
+          <div class="menu-card">
+            <div class="skeleton" style="aspect-ratio:4/3"></div>
+            <div class="p-4 space-y-3">
+              <div class="skeleton h-4 w-2/3 rounded"></div>
+              <div class="skeleton h-3 w-full rounded"></div>
+              <div class="skeleton h-3 w-1/2 rounded"></div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Featured grid -->
+      <div x-show="isLoaded" class="menu-grid stagger-children">
+        <template x-for="product in featuredProducts" :key="product.id">
+          <div class="menu-card fade-in">
+            <div class="card-image-wrapper">
+              <span class="badge-featured">ویژه</span>
+              <img :src="product.image_url" :alt="product.name_fa" class="card-image" loading="lazy">
+            </div>
+            <div class="card-body">
+              <h3 class="card-name" x-text="product.name_fa"></h3>
+              <p class="card-desc" x-text="product.description_fa"></p>
+              <div class="card-footer">
+                <div class="card-price">
+                  <span x-text="formatPrice(product.price)"></span>
+                </div>
+                <button class="fav-btn"
+                        :class="{ 'active': isFavorite(product.id) }"
+                        @click="toggleFavorite(product.id); $el.classList.add('pop'); setTimeout(()=>$el.classList.remove('pop'), 300)"
+                        title="افزودن به علاقه‌مندی‌ها">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ FULL MENU ═══════════════ -->
+  <section id="menu" class="py-16 sm:py-24 bg-cafe-darker">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="fade-in">
+        <h2 class="section-title">منوی کامل</h2>
+        <div class="gold-line"></div>
+        <p class="section-subtitle">همه چیزهایی که در کافه آی‌چای سرو می‌شود</p>
+      </div>
+
+      <!-- Category chips -->
+      <div class="chip-container fade-in mb-8 justify-center">
+        <template x-for="cat in categories" :key="cat.id">
+          <button class="chip"
+                  :class="{ 'active': activeCategory === cat.id }"
+                  @click="setCategory(cat.id)">
+            <span x-text="cat.icon" class="ml-1"></span>
+            <span x-text="cat.name_fa"></span>
+          </button>
+        </template>
+      </div>
+
+      <!-- Search count / info -->
+      <div x-show="searchQuery.trim()" class="text-center mb-6 text-cafe-text-muted text-sm">
+        <span x-text="toPersianNum(filteredProducts.length)"></span> نتیجه برای «<span x-text="searchQuery" class="text-cafe-gold"></span>»
+      </div>
+
+      <!-- Skeleton loaders -->
+      <div x-show="!isLoaded" class="menu-grid">
+        <template x-for="i in 8">
+          <div class="menu-card">
+            <div class="skeleton" style="aspect-ratio:4/3"></div>
+            <div class="p-4 space-y-3">
+              <div class="skeleton h-4 w-2/3 rounded"></div>
+              <div class="skeleton h-3 w-full rounded"></div>
+              <div class="skeleton h-3 w-1/2 rounded"></div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Menu grid -->
+      <div x-show="isLoaded" class="menu-grid stagger-children">
+        <template x-for="product in filteredProducts" :key="product.id">
+          <div class="menu-card fade-in">
+            <div class="card-image-wrapper">
+              <span x-show="product.is_featured" class="badge-featured">ویژه</span>
+              <img :src="product.image_url" :alt="product.name_fa" class="card-image" loading="lazy">
+            </div>
+            <div class="card-body">
+              <h3 class="card-name" x-text="product.name_fa"></h3>
+              <p class="card-desc" x-text="product.description_fa"></p>
+              <div class="card-footer">
+                <div class="card-price">
+                  <span x-text="formatPrice(product.price)"></span>
+                </div>
+                <button class="fav-btn"
+                        :class="{ 'active': isFavorite(product.id) }"
+                        @click="toggleFavorite(product.id); $el.classList.add('pop'); setTimeout(()=>$el.classList.remove('pop'), 300)"
+                        title="علاقه‌مندی">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Empty state -->
+      <div x-show="isLoaded && filteredProducts.length === 0" class="empty-state">
+        <svg class="w-16 h-16 mx-auto text-cafe-text-muted" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <h3 class="text-lg font-bold text-cafe-cream mt-4">محصولی یافت نشد</h3>
+        <p class="text-sm text-cafe-text-muted mt-2">عبارت جستجو یا دسته‌بندی دیگری امتحان کنید</p>
+        <button @click="searchQuery=''; activeCategory='cat-1'" class="mt-4 px-6 py-2 bg-cafe-gold text-cafe-black font-bold rounded-full text-sm">
+          نمایش همه
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ ABOUT ═══════════════ -->
+  <section id="about" class="about-section py-16 sm:py-24">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="fade-in text-center">
+        <h2 class="section-title">درباره ما</h2>
+        <div class="gold-line"></div>
+      </div>
+
+      <div class="fade-in mt-8">
+        <div class="bg-cafe-dark border border-cafe-brown/20 rounded-2xl p-8 sm:p-12 text-center">
+          <!-- Decorative quote -->
+          <svg class="w-10 h-10 text-cafe-gold/30 mx-auto mb-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10H14.017zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10H0z"/>
+          </svg>
+          <p class="text-cafe-cream text-lg sm:text-xl leading-relaxed font-light" x-text="cafeInfo.about_fa"></p>
+          <div class="mt-8 flex items-center justify-center gap-2 text-cafe-gold">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span class="text-sm text-cafe-text-muted" x-text="cafeInfo.address_fa"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ FOOTER ═══════════════ -->
+  <footer id="contact" class="site-footer py-12 sm:py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+        <!-- Brand -->
+        <div>
+          <h3 class="text-xl font-black text-cafe-gold mb-3" x-text="cafeInfo.name">کافه آی‌چای</h3>
+          <p class="text-cafe-text-muted text-sm leading-relaxed" x-text="cafeInfo.tagline"></p>
+          <div class="flex gap-3 mt-4">
+            <!-- Instagram -->
+            <a :href="'https://instagram.com/' + cafeInfo.instagram?.replace('@','')" target="_blank" class="footer-link" title="اینستاگرام">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+              </svg>
+            </a>
+            <!-- Telegram -->
+            <a :href="'https://t.me/' + cafeInfo.telegram?.replace('@','')" target="_blank" class="footer-link" title="تلگرام">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+              </svg>
+            </a>
+            <!-- Phone -->
+            <a :href="'tel:' + cafeInfo.phone" class="footer-link" title="تماس">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Quick links -->
+        <div>
+          <h4 class="text-cafe-cream font-bold mb-4">دسترسی سریع</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="#menu" @click.prevent="scrollTo('menu')" class="footer-link">منوی کامل</a></li>
+            <li><a href="#featured" @click.prevent="scrollTo('featured')" class="footer-link">محصولات ویژه</a></li>
+            <li><a href="#about" @click.prevent="scrollTo('about')" class="footer-link">درباره ما</a></li>
+          </ul>
+        </div>
+
+        <!-- Hours -->
+        <div>
+          <h4 class="text-cafe-cream font-bold mb-4">ساعات کاری</h4>
+          <div class="flex items-start gap-2 text-sm text-cafe-text-muted">
+            <svg class="w-4 h-4 mt-0.5 text-cafe-gold flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+            </svg>
+            <span x-text="cafeInfo.hours_fa">هر روز از ساعت ۸ صبح تا ۱۲ شب</span>
+          </div>
+        </div>
+
+        <!-- Contact -->
+        <div>
+          <h4 class="text-cafe-cream font-bold mb-4">تماس با ما</h4>
+          <div class="space-y-3 text-sm text-cafe-text-muted">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-cafe-gold flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+              </svg>
+              <span x-text="cafeInfo.phone">۰۲۱-۸۸۷۷۶۶۵۵</span>
+            </div>
+            <div class="flex items-start gap-2">
+              <svg class="w-4 h-4 mt-0.5 text-cafe-gold flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              <span x-text="cafeInfo.address_fa"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom bar -->
+      <div class="border-t border-cafe-brown/20 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p class="text-cafe-text-muted text-xs">
+          تمامی حقوق برای <span class="text-cafe-gold" x-text="cafeInfo.name"></span> محفوظ است.
+        </p>
+        <p class="text-cafe-text-muted text-xs">
+          طراحی شده با ☕ و عشق
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/utils.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
