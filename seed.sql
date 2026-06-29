@@ -141,5 +141,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Optional: if pg_cron extension is available, schedule daily cleanup at 3 AM
--- SELECT cron.schedule('delete-old-feedbacks', '0 3 * * *', 'SELECT delete_old_feedbacks()');
+-- Schedule daily cleanup at 3 AM via pg_cron (requires pg_cron extension)
+-- Enable pg_cron in Supabase Dashboard → Database → Extensions first
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
+    PERFORM cron.schedule(
+      'delete-old-feedbacks',
+      '0 3 * * *',
+      'SELECT delete_old_feedbacks()'
+    );
+  END IF;
+END $$;

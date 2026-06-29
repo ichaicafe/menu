@@ -185,26 +185,41 @@ const SupaDB = {
   },
 
   async cleanOldFeedbacks() {
-    if (!this.ready) return;
-    try {
-      const cutoff = new Date(
-        Date.now() - 7 * 24 * 60 * 60 * 1000
-      ).toISOString();
-      await this.client
-        .from("feedbacks")
-        .delete()
-        .lt("created_at", cutoff);
-    } catch (e) {
-      console.warn("Cleanup old feedbacks failed:", e);
+    const cutoff = new Date(
+      Date.now() - 7 * 24 * 60 * 60 * 1000
+    ).toISOString();
+    // Clean from Supabase
+    if (this.ready) {
+      try {
+        await this.client
+          .from("feedbacks")
+          .delete()
+          .lt("created_at", cutoff);
+      } catch (e) {
+        console.warn("Supabase cleanup old feedbacks failed:", e);
+      }
+    }
+    // Clean from localStorage
+    const local = Utils.getStorage("cafe_feedbacks", []);
+    const filtered = local.filter((f) => f.created_at >= cutoff);
+    if (filtered.length !== local.length) {
+      Utils.setStorage("cafe_feedbacks", filtered);
     }
   },
 
   async fetchFeedbacks() {
+    // Always run cleanup first to purge expired feedbacks
+    await this.cleanOldFeedbacks();
     if (!this.ready) return Utils.getStorage("cafe_feedbacks", []);
     try {
+      // Only fetch feedbacks from the last 7 days
+      const cutoff = new Date(
+        Date.now() - 7 * 24 * 60 * 60 * 1000
+      ).toISOString();
       const { data, error } = await this.client
         .from("feedbacks")
         .select("*")
+        .gte("created_at", cutoff)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
