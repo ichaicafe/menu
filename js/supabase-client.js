@@ -199,6 +199,30 @@ const SupaDB = {
     }
   },
 
+  async fetchFeedbacks() {
+    if (!this.ready) return Utils.getStorage("cafe_feedbacks", []);
+    try {
+      const { data, error } = await this.client
+        .from("feedbacks")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    } catch (e) {
+      console.warn("Supabase fetch feedbacks failed:", e);
+      return Utils.getStorage("cafe_feedbacks", []);
+    }
+  },
+
+  async deleteFeedback(id) {
+    if (!this.ready) return this._localDelete("cafe_feedbacks", id);
+    const { error } = await this.client
+      .from("feedbacks")
+      .delete()
+      .eq("id", id);
+    if (error) throw error;
+  },
+
   _localSave(key, item) {
     const list = Utils.getStorage(key, []);
     const idx = list.findIndex((x) => x.id === item.id);

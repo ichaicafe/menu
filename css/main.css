@@ -268,11 +268,12 @@ body {
 .chip-container {
   display: flex;
   gap: 0.5rem;
-  overflow-x: auto;
+  overflow-x: scroll;
+  -webkit-overflow-scrolling: touch;
   padding: 0.5rem 0;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  -webkit-overflow-scrolling: touch;
+  flex-wrap: nowrap;
 }
 .chip-container::-webkit-scrollbar { display: none; }
 

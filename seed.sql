@@ -40,13 +40,23 @@ ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cafe_info ENABLE ROW LEVEL SECURITY;
 
 -- 3. Policies for public (anonymous) read access
+DROP POLICY IF EXISTS "Public read categories" ON public.categories;
 CREATE POLICY "Public read categories" ON public.categories FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public read products" ON public.products;
 CREATE POLICY "Public read products" ON public.products FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public read cafe_info" ON public.cafe_info;
 CREATE POLICY "Public read cafe_info" ON public.cafe_info FOR SELECT USING (true);
 
 -- 4. Policies for authenticated (admin) full access
+DROP POLICY IF EXISTS "Admin all categories" ON public.categories;
 CREATE POLICY "Admin all categories" ON public.categories FOR ALL USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Admin all products" ON public.products;
 CREATE POLICY "Admin all products" ON public.products FOR ALL USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Admin all cafe_info" ON public.cafe_info;
 CREATE POLICY "Admin all cafe_info" ON public.cafe_info FOR ALL USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
 
 -- 5. Seed data (insert initial values)
@@ -111,12 +121,15 @@ CREATE INDEX IF NOT EXISTS idx_feedbacks_created_at ON public.feedbacks (created
 -- Row Level Security: allow anonymous inserts, authenticated reads/deletes
 ALTER TABLE public.feedbacks ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow anonymous insert" ON public.feedbacks;
 CREATE POLICY "Allow anonymous insert" ON public.feedbacks
   FOR INSERT WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Allow authenticated select" ON public.feedbacks;
 CREATE POLICY "Allow authenticated select" ON public.feedbacks
   FOR SELECT USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Allow authenticated delete" ON public.feedbacks;
 CREATE POLICY "Allow authenticated delete" ON public.feedbacks
   FOR DELETE USING (auth.role() = 'authenticated');
 

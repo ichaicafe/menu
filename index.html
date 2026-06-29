@@ -233,12 +233,12 @@
       </div>
 
       <!-- Category chips -->
-      <div class="chip-container fade-in mb-8 justify-center">
+      <div class="chip-container mb-8">
         <template x-for="cat in categories" :key="cat.id">
           <button class="chip"
                   :class="{ 'active': activeCategory === cat.id }"
                   @click="setCategory(cat.id)">
-            <span x-text="cat.icon" class="ml-1"></span>
+            <span x-text="cat.icon" class="me-1"></span>
             <span x-text="cat.name_fa"></span>
           </button>
         </template>

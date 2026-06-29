@@ -1,6 +1,6 @@
 /**
  * admin.js — Admin panel logic (Alpine.js)
- * CRUD for products and categories via Supabase with localStorage fallback.
+ * CRUD for products, categories, feedbacks, and content management.
  * Includes: auth, dashboard stats, searchable tables, modals, image upload, toast.
  */
 
@@ -21,12 +21,15 @@ document.addEventListener("alpine:init", () => {
     // Data
     categories: [],
     products: [],
+    feedbacks: [],
+    cafeInfo: {},
 
     // UI state
     searchQuery: "",
     showProductModal: false,
     showCategoryModal: false,
     showDeleteModal: false,
+    showCafeInfoModal: false,
     editingProduct: null,
     editingCategory: null,
     deleteTarget: null,
@@ -56,6 +59,19 @@ document.addEventListener("alpine:init", () => {
       icon: "",
     },
 
+    // Cafe info form
+    cafeInfoForm: {
+      name: "",
+      tagline: "",
+      welcome_fa: "",
+      about_fa: "",
+      address_fa: "",
+      phone: "",
+      instagram: "",
+      telegram: "",
+      hours_fa: "",
+    },
+
     // Init
     async init() {
       this.loadTheme();
@@ -73,6 +89,8 @@ document.addEventListener("alpine:init", () => {
       if (!SupaDB.ready) {
         this.categories = Utils.getStorage("cafe_categories", DEFAULT_CATEGORIES);
         this.products = Utils.getStorage("cafe_products", DEFAULT_PRODUCTS);
+        this.cafeInfo = Utils.getStorage("cafe_info", DEFAULT_CAFE_INFO);
+        this.feedbacks = Utils.getStorage("cafe_feedbacks", []);
         this.categories.sort((a, b) => a.order - b.order);
         this.products.sort((a, b) => a.order - b.order);
         this.isAuthenticated = true;
@@ -103,12 +121,16 @@ document.addEventListener("alpine:init", () => {
       this.isAuthenticated = false;
       this.categories = [];
       this.products = [];
+      this.feedbacks = [];
+      this.cafeInfo = {};
     },
 
     // Data management
     async loadData() {
       this.categories = await SupaDB.fetchCategories();
       this.products = await SupaDB.fetchProducts();
+      this.cafeInfo = await SupaDB.fetchCafeInfo();
+      this.feedbacks = await SupaDB.fetchFeedbacks();
       this.categories.sort((a, b) => a.order - b.order);
       this.products.sort((a, b) => a.order - b.order);
     },
@@ -147,6 +169,9 @@ document.addEventListener("alpine:init", () => {
     get visitCount() {
       return Utils.getStorage("cafe_visit_count", 0);
     },
+    get feedbackCount() {
+      return this.feedbacks.length;
+    },
 
     // Search
     get filteredProducts() {
@@ -157,6 +182,16 @@ document.addEventListener("alpine:init", () => {
           p.name_fa.includes(q) ||
           p.description_fa.includes(q) ||
           this.getCategoryName(p.category_id).includes(q)
+      );
+    },
+
+    get filteredFeedbacks() {
+      if (!this.searchQuery.trim()) return this.feedbacks;
+      const q = this.searchQuery.trim();
+      return this.feedbacks.filter(
+        (f) =>
+          (f.name && f.name.includes(q)) ||
+          (f.message && f.message.includes(q))
       );
     },
 
@@ -305,6 +340,13 @@ document.addEventListener("alpine:init", () => {
       this.showDeleteModal = true;
     },
 
+    // Feedback CRUD
+    confirmDeleteFeedback(feedback) {
+      this.deleteTarget = feedback;
+      this.deleteType = "feedback";
+      this.showDeleteModal = true;
+    },
+
     // Execute delete
     async executeDelete() {
       try {
@@ -326,6 +368,12 @@ document.addEventListener("alpine:init", () => {
             (c) => c.id !== this.deleteTarget.id
           );
           this.toast("دسته‌بندی حذف شد");
+        } else if (this.deleteType === "feedback") {
+          await SupaDB.deleteFeedback(this.deleteTarget.id);
+          this.feedbacks = this.feedbacks.filter(
+            (f) => f.id !== this.deleteTarget.id
+          );
+          this.toast("انتقاد حذف شد");
         }
       } catch (e) {
         console.error("Delete failed:", e);
@@ -333,6 +381,42 @@ document.addEventListener("alpine:init", () => {
       }
       this.showDeleteModal = false;
       this.deleteTarget = null;
+    },
+
+    // Cafe info (content management)
+    openEditCafeInfo() {
+      this.cafeInfoForm = {
+        name: this.cafeInfo.name || "",
+        tagline: this.cafeInfo.tagline || "",
+        welcome_fa: this.cafeInfo.welcome_fa || "",
+        about_fa: this.cafeInfo.about_fa || "",
+        address_fa: this.cafeInfo.address_fa || "",
+        phone: this.cafeInfo.phone || "",
+        instagram: this.cafeInfo.instagram || "",
+        telegram: this.cafeInfo.telegram || "",
+        hours_fa: this.cafeInfo.hours_fa || "",
+      };
+      this.showCafeInfoModal = true;
+    },
+
+    async saveCafeInfo() {
+      if (!this.cafeInfoForm.name.trim()) {
+        this.toast("لطفاً نام کافه را وارد کنید", "error");
+        return;
+      }
+      try {
+        const updated = {
+          ...this.cafeInfo,
+          ...this.cafeInfoForm,
+        };
+        await SupaDB.saveCafeInfo(updated);
+        this.cafeInfo = updated;
+        this.showCafeInfoModal = false;
+        this.toast("محتوای سایت با موفقیت ذخیره شد");
+      } catch (e) {
+        console.error("Save cafe info failed:", e);
+        this.toast("ذخیره محتوا ناموفق بود", "error");
+      }
     },
 
     // Image upload
@@ -410,6 +494,11 @@ document.addEventListener("alpine:init", () => {
 
     toPersianNum(n) {
       return Utils.toPersianNum(n);
+    },
+
+    formatDate(dateStr) {
+      if (!dateStr) return "—";
+      return Utils.toPersianDate(new Date(dateStr));
     },
   }));
 });
