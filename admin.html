@@ -28,7 +28,7 @@
   <link rel="stylesheet" href="css/admin.css">
 </head>
 
-<body class="admin-body font-fa" x-data="adminPanel">
+<body class="admin-body font-fa" x-data="adminPanel" :class="{ 'dark-mode': darkMode }">
 
   <!-- ═══════════ LOGIN SCREEN ═══════════ -->
   <div x-show="!isAuthenticated" class="login-screen" x-cloak>

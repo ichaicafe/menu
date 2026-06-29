@@ -22,6 +22,7 @@
   --cafe-border: rgba(45, 33, 23, 0.12);
   --cafe-bg: #faf6f0;
   --cafe-card-bg: #ffffff;
+  --cafe-footer-bg: #e8ddd0;
   --font-fa: "Vazirmatn", "Tahoma", sans-serif;
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -457,24 +458,24 @@ body {
 
 /* ── Footer ── */
 .site-footer {
-  background: var(--cafe-darker);
-  border-top: 1px solid rgba(184, 134, 11, 0.15);
-  color: rgba(250, 246, 240, 0.8);
+  background: var(--cafe-footer-bg);
+  border-top: 1px solid rgba(45, 33, 23, 0.15);
+  color: var(--cafe-text-muted);
 }
 
 .site-footer h3,
 .site-footer h4 {
-  color: var(--cafe-gold-light);
+  color: var(--cafe-gold);
 }
 
 .footer-link {
-  color: rgba(250, 246, 240, 0.6);
+  color: var(--cafe-text-muted);
   transition: var(--transition-fast);
   text-decoration: none;
 }
 
 .footer-link:hover {
-  color: var(--cafe-gold-light);
+  color: var(--cafe-gold);
 }
 
 .footer-logo {
@@ -510,7 +511,7 @@ body {
   background: var(--cafe-card-bg);
   border: 1px solid var(--cafe-border);
   border-radius: 100px;
-  padding: 0.6rem 1rem 0.6rem 2.75rem;
+  padding: 0.6rem 2.75rem 0.6rem 1rem;
   color: var(--cafe-text);
   font-family: var(--font-fa);
   font-size: 0.875rem;
