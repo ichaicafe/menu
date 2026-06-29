@@ -17,8 +17,9 @@ document.addEventListener("alpine:init", () => {
     showMobileMenu: false,
 
     // Init
-    init() {
-      this.loadData();
+    async init() {
+      SupaDB.init();
+      await this.loadData();
       this.loadFavorites();
       // Simulate brief load for skeleton effect
       setTimeout(() => {
@@ -29,11 +30,11 @@ document.addEventListener("alpine:init", () => {
       this.setupNavbar();
     },
 
-    // Load data from localStorage or fall back to seed defaults
-    loadData() {
-      this.categories = Utils.getStorage("cafe_categories", DEFAULT_CATEGORIES);
-      this.products = Utils.getStorage("cafe_products", DEFAULT_PRODUCTS);
-      this.cafeInfo = Utils.getStorage("cafe_info", DEFAULT_CAFE_INFO);
+    // Load data from Supabase with localStorage fallback
+    async loadData() {
+      this.categories = await SupaDB.fetchCategories();
+      this.products = await SupaDB.fetchProducts();
+      this.cafeInfo = await SupaDB.fetchCafeInfo();
       // Sort by order
       this.categories.sort((a, b) => a.order - b.order);
       this.products.sort((a, b) => a.order - b.order);

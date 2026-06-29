@@ -27,6 +27,35 @@
 
 <body class="admin-body font-fa" x-data="adminPanel" :class="{ 'light-mode': !darkMode }">
 
+  <!-- ═══════════ LOGIN SCREEN ═══════════ -->
+  <div x-show="!isAuthenticated" class="login-screen" x-cloak>
+    <div class="login-box">
+      <div class="text-center mb-6">
+        <div class="text-4xl mb-2">☕</div>
+        <h2 class="login-title">ورود به پنل مدیریت</h2>
+        <p class="text-sm mt-1" style="color:var(--admin-text-muted)">کافه آی‌چای</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ایمیل</label>
+        <input type="email" class="form-input" x-model="loginEmail" placeholder="admin@example.com"
+               @keydown.enter="login()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">رمز عبور</label>
+        <input type="password" class="form-input" x-model="loginPassword" placeholder="••••••••"
+               @keydown.enter="login()">
+      </div>
+      <button @click="login()" class="btn btn-gold w-full" :disabled="loginLoading" style="width:100%">
+        <span x-show="!loginLoading">ورود</span>
+        <span x-show="loginLoading">در حال ورود...</span>
+      </button>
+      <p x-show="loginError" class="text-sm mt-3 text-center" style="color:var(--admin-red)" x-text="loginError"></p>
+    </div>
+  </div>
+
+  <!-- ═══════════ ADMIN PANEL (visible when authenticated) ═══════════ -->
+  <div x-show="isAuthenticated">
+
   <!-- ═══════════ SIDEBAR ═══════════ -->
   <aside class="admin-sidebar" :class="{ 'open': sidebarOpen }">
     <div class="sidebar-logo">
@@ -62,10 +91,14 @@
     </nav>
 
     <div class="p-4 border-t" style="border-color:var(--admin-border)">
-      <a href="index.html" target="_blank" class="nav-item" style="margin-bottom:0">
+      <a href="index.html" target="_blank" class="nav-item" style="margin-bottom:0.25rem">
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
         مشاهده سایت
       </a>
+      <button @click="logout()" class="nav-item" style="margin-bottom:0;color:var(--admin-red)">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        خروج
+      </button>
     </div>
   </aside>
 
@@ -398,6 +431,7 @@
     </div>
 
   </main>
+  </div><!-- end isAuthenticated wrapper -->
 
   <!-- ═══════════ PRODUCT MODAL ═══════════ -->
   <div x-show="showProductModal" class="modal-overlay" x-transition.opacity @click.self="showProductModal=false">
@@ -433,8 +467,22 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label">آدرس تصویر (URL)</label>
-        <input type="url" class="form-input" x-model="productForm.image_url" placeholder="https://...">
+        <label class="form-label">تصویر محصول</label>
+        <div class="flex gap-2 mb-2">
+          <button type="button" @click="imageMode='url'" :class="{'btn-gold': imageMode==='url'}" class="btn btn-outline btn-sm">لینک تصویر</button>
+          <button type="button" @click="imageMode='upload'" :class="{'btn-gold': imageMode==='upload'}" class="btn btn-outline btn-sm">آپلود فایل</button>
+        </div>
+        <div x-show="imageMode==='url'">
+          <input type="url" class="form-input" x-model="productForm.image_url" placeholder="https://images.unsplash.com/...">
+        </div>
+        <div x-show="imageMode==='upload'">
+          <label class="upload-area" :class="{ 'uploading': uploading }">
+            <input type="file" accept="image/*" @change="handleImageUpload($event)" class="hidden" :disabled="uploading">
+            <svg class="w-8 h-8 mx-auto mb-2" style="color:var(--admin-text-muted)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            <span x-show="!uploading" class="text-sm" style="color:var(--admin-text-muted)">کلیک کنید یا فایل را بکشید</span>
+            <span x-show="uploading" class="text-sm" style="color:var(--admin-gold)">در حال آپلود...</span>
+          </label>
+        </div>
         <img x-show="productForm.image_url" :src="productForm.image_url" class="image-preview"
              @error="$el.style.display='none'" @load="$el.style.display='block'">
       </div>
@@ -512,8 +560,11 @@
   </div>
 
   <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/data.js"></script>
+  <script src="js/supabase-client.js"></script>
   <script src="js/admin.js"></script>
 </body>
 </html>

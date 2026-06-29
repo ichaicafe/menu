@@ -1,7 +1,7 @@
 /**
  * admin.js — Admin panel logic (Alpine.js)
- * Full CRUD for products, categories, and cafe info using localStorage.
- * Includes: dashboard stats, searchable tables, modals, drag-drop, toast notifications.
+ * Full CRUD for products, categories, and cafe info via Supabase.
+ * Includes: auth, dashboard stats, searchable tables, modals, image upload, toast notifications.
  */
 
 document.addEventListener("alpine:init", () => {
@@ -10,6 +10,13 @@ document.addEventListener("alpine:init", () => {
     activePage: "dashboard",
     sidebarOpen: false,
     darkMode: true,
+
+    // Auth state
+    isAuthenticated: false,
+    loginEmail: "",
+    loginPassword: "",
+    loginLoading: false,
+    loginError: "",
 
     // Data
     categories: [],
@@ -31,6 +38,10 @@ document.addEventListener("alpine:init", () => {
     showToast: false,
     toastTimer: null,
 
+    // Image upload state
+    imageMode: "url",
+    uploading: false,
+
     // Product form
     productForm: {
       name_fa: "",
@@ -51,32 +62,66 @@ document.addEventListener("alpine:init", () => {
     contentForm: {},
 
     // Init
-    init() {
-      this.loadData();
+    async init() {
       this.loadTheme();
       this.generateMockOrders();
+
+      if (SupaDB.init()) {
+        const session = await SupaDB.getSession();
+        if (session) {
+          this.isAuthenticated = true;
+          await this.loadData();
+          return;
+        }
+      }
+
+      // If Supabase not configured, load from localStorage as demo
+      if (!SupaDB.ready) {
+        this.categories = Utils.getStorage("cafe_categories", DEFAULT_CATEGORIES);
+        this.products = Utils.getStorage("cafe_products", DEFAULT_PRODUCTS);
+        this.cafeInfo = Utils.getStorage("cafe_info", DEFAULT_CAFE_INFO);
+        this.contentForm = { ...this.cafeInfo };
+        this.categories.sort((a, b) => a.order - b.order);
+        this.products.sort((a, b) => a.order - b.order);
+        this.isAuthenticated = true;
+      }
+    },
+
+    // Auth methods
+    async login() {
+      this.loginError = "";
+      this.loginLoading = true;
+      try {
+        const { error } = await SupaDB.signIn(
+          this.loginEmail,
+          this.loginPassword
+        );
+        if (error) throw error;
+        this.isAuthenticated = true;
+        await this.loadData();
+        this.toast("با موفقیت وارد شدید");
+      } catch {
+        this.loginError = "ایمیل یا رمز عبور اشتباه است";
+      }
+      this.loginLoading = false;
+    },
+
+    async logout() {
+      await SupaDB.signOut();
+      this.isAuthenticated = false;
+      this.categories = [];
+      this.products = [];
+      this.cafeInfo = {};
     },
 
     // Data management
-    loadData() {
-      this.categories = Utils.getStorage("cafe_categories", DEFAULT_CATEGORIES);
-      this.products = Utils.getStorage("cafe_products", DEFAULT_PRODUCTS);
-      this.cafeInfo = Utils.getStorage("cafe_info", DEFAULT_CAFE_INFO);
+    async loadData() {
+      this.categories = await SupaDB.fetchCategories();
+      this.products = await SupaDB.fetchProducts();
+      this.cafeInfo = await SupaDB.fetchCafeInfo();
       this.contentForm = { ...this.cafeInfo };
       this.categories.sort((a, b) => a.order - b.order);
       this.products.sort((a, b) => a.order - b.order);
-    },
-
-    saveCategories() {
-      Utils.setStorage("cafe_categories", this.categories);
-    },
-
-    saveProducts() {
-      Utils.setStorage("cafe_products", this.products);
-    },
-
-    saveCafeInfo() {
-      Utils.setStorage("cafe_info", this.cafeInfo);
     },
 
     // Theme
@@ -136,6 +181,7 @@ document.addEventListener("alpine:init", () => {
     // Product CRUD
     openAddProduct() {
       this.editingProduct = null;
+      this.imageMode = "url";
       this.productForm = {
         name_fa: "",
         description_fa: "",
@@ -149,6 +195,7 @@ document.addEventListener("alpine:init", () => {
 
     openEditProduct(product) {
       this.editingProduct = product;
+      this.imageMode = "url";
       this.productForm = {
         name_fa: product.name_fa,
         description_fa: product.description_fa,
@@ -160,18 +207,16 @@ document.addEventListener("alpine:init", () => {
       this.showProductModal = true;
     },
 
-    saveProduct() {
+    async saveProduct() {
       if (!this.productForm.name_fa.trim() || !this.productForm.price) {
         this.toast("لطفاً نام و قیمت محصول را وارد کنید", "error");
         return;
       }
 
-      if (this.editingProduct) {
-        // Update
-        const idx = this.products.findIndex((p) => p.id === this.editingProduct.id);
-        if (idx > -1) {
-          this.products[idx] = {
-            ...this.products[idx],
+      try {
+        if (this.editingProduct) {
+          const updated = {
+            ...this.editingProduct,
             name_fa: this.productForm.name_fa,
             description_fa: this.productForm.description_fa,
             price: Number(this.productForm.price),
@@ -179,26 +224,32 @@ document.addEventListener("alpine:init", () => {
             image_url: this.productForm.image_url,
             is_featured: this.productForm.is_featured,
           };
+          await SupaDB.saveProduct(updated);
+          const idx = this.products.findIndex(
+            (p) => p.id === this.editingProduct.id
+          );
+          if (idx > -1) this.products[idx] = updated;
+          this.toast("محصول با موفقیت ویرایش شد");
+        } else {
+          const newProduct = {
+            id: Utils.generateId(),
+            name_fa: this.productForm.name_fa,
+            description_fa: this.productForm.description_fa,
+            price: Number(this.productForm.price),
+            category_id: this.productForm.category_id,
+            image_url: this.productForm.image_url,
+            is_featured: this.productForm.is_featured,
+            order: this.products.length + 1,
+          };
+          const saved = await SupaDB.saveProduct(newProduct);
+          this.products.push(saved || newProduct);
+          this.toast("محصول جدید اضافه شد");
         }
-        this.toast("محصول با موفقیت ویرایش شد");
-      } else {
-        // Add
-        const newProduct = {
-          id: Utils.generateId(),
-          name_fa: this.productForm.name_fa,
-          description_fa: this.productForm.description_fa,
-          price: Number(this.productForm.price),
-          category_id: this.productForm.category_id,
-          image_url: this.productForm.image_url,
-          is_featured: this.productForm.is_featured,
-          order: this.products.length + 1,
-        };
-        this.products.push(newProduct);
-        this.toast("محصول جدید اضافه شد");
+        this.showProductModal = false;
+      } catch (e) {
+        console.error("Save product failed:", e);
+        this.toast("ذخیره محصول ناموفق بود. دوباره تلاش کنید", "error");
       }
-
-      this.saveProducts();
-      this.showProductModal = false;
     },
 
     confirmDeleteProduct(product) {
@@ -220,35 +271,41 @@ document.addEventListener("alpine:init", () => {
       this.showCategoryModal = true;
     },
 
-    saveCategory() {
+    async saveCategory() {
       if (!this.categoryForm.name_fa.trim()) {
         this.toast("لطفاً نام دسته‌بندی را وارد کنید", "error");
         return;
       }
 
-      if (this.editingCategory) {
-        const idx = this.categories.findIndex((c) => c.id === this.editingCategory.id);
-        if (idx > -1) {
-          this.categories[idx] = {
-            ...this.categories[idx],
+      try {
+        if (this.editingCategory) {
+          const updated = {
+            ...this.editingCategory,
             name_fa: this.categoryForm.name_fa,
             icon: this.categoryForm.icon,
           };
+          await SupaDB.saveCategory(updated);
+          const idx = this.categories.findIndex(
+            (c) => c.id === this.editingCategory.id
+          );
+          if (idx > -1) this.categories[idx] = updated;
+          this.toast("دسته‌بندی ویرایش شد");
+        } else {
+          const newCat = {
+            id: Utils.generateId(),
+            name_fa: this.categoryForm.name_fa,
+            icon: this.categoryForm.icon,
+            order: this.categories.length,
+          };
+          const saved = await SupaDB.saveCategory(newCat);
+          this.categories.push(saved || newCat);
+          this.toast("دسته‌بندی جدید اضافه شد");
         }
-        this.toast("دسته‌بندی ویرایش شد");
-      } else {
-        const newCat = {
-          id: Utils.generateId(),
-          name_fa: this.categoryForm.name_fa,
-          icon: this.categoryForm.icon,
-          order: this.categories.length,
-        };
-        this.categories.push(newCat);
-        this.toast("دسته‌بندی جدید اضافه شد");
+        this.showCategoryModal = false;
+      } catch (e) {
+        console.error("Save category failed:", e);
+        this.toast("ذخیره دسته‌بندی ناموفق بود", "error");
       }
-
-      this.saveCategories();
-      this.showCategoryModal = false;
     },
 
     confirmDeleteCategory(category) {
@@ -262,32 +319,65 @@ document.addEventListener("alpine:init", () => {
     },
 
     // Execute delete
-    executeDelete() {
-      if (this.deleteType === "product") {
-        this.products = this.products.filter((p) => p.id !== this.deleteTarget.id);
-        this.saveProducts();
-        this.toast("محصول حذف شد");
-      } else if (this.deleteType === "category") {
-        // Move products in this category to uncategorized
-        this.products.forEach((p) => {
-          if (p.category_id === this.deleteTarget.id) {
-            p.category_id = "cat-1";
+    async executeDelete() {
+      try {
+        if (this.deleteType === "product") {
+          await SupaDB.deleteProduct(this.deleteTarget.id);
+          this.products = this.products.filter(
+            (p) => p.id !== this.deleteTarget.id
+          );
+          this.toast("محصول حذف شد");
+        } else if (this.deleteType === "category") {
+          // Move products in this category to uncategorized
+          for (const p of this.products) {
+            if (p.category_id === this.deleteTarget.id) {
+              p.category_id = "cat-1";
+              await SupaDB.saveProduct(p);
+            }
           }
-        });
-        this.categories = this.categories.filter((c) => c.id !== this.deleteTarget.id);
-        this.saveCategories();
-        this.saveProducts();
-        this.toast("دسته‌بندی حذف شد");
+          await SupaDB.deleteCategory(this.deleteTarget.id);
+          this.categories = this.categories.filter(
+            (c) => c.id !== this.deleteTarget.id
+          );
+          this.toast("دسته‌بندی حذف شد");
+        }
+      } catch (e) {
+        console.error("Delete failed:", e);
+        this.toast("حذف ناموفق بود. دوباره تلاش کنید", "error");
       }
       this.showDeleteModal = false;
       this.deleteTarget = null;
     },
 
     // Content management
-    saveContent() {
-      this.cafeInfo = { ...this.contentForm };
-      this.saveCafeInfo();
-      this.toast("اطلاعات کافه ذخیره شد");
+    async saveContent() {
+      try {
+        this.cafeInfo = { ...this.contentForm };
+        await SupaDB.saveCafeInfo(this.cafeInfo);
+        this.toast("اطلاعات کافه ذخیره شد");
+      } catch (e) {
+        console.error("Save cafe info failed:", e);
+        this.toast("ذخیره اطلاعات ناموفق بود", "error");
+      }
+    },
+
+    // Image upload
+    async handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        this.toast("حجم فایل نباید بیشتر از ۵ مگابایت باشد", "error");
+        return;
+      }
+      this.uploading = true;
+      try {
+        const url = await SupaDB.uploadImage(file);
+        this.productForm.image_url = url;
+        this.toast("تصویر آپلود شد");
+      } catch {
+        this.toast("آپلود تصویر ناموفق بود", "error");
+      }
+      this.uploading = false;
     },
 
     // Drag & drop reordering
@@ -301,31 +391,46 @@ document.addEventListener("alpine:init", () => {
       event.preventDefault();
     },
 
-    drop(index) {
+    async drop(index) {
       if (this.dragStartIndex === null || this.dragStartIndex === index) return;
-      const items = this.activePage === "products" ? this.products : this.categories;
+      const items =
+        this.activePage === "products" ? this.products : this.categories;
       const [moved] = items.splice(this.dragStartIndex, 1);
       items.splice(index, 0, moved);
       items.forEach((item, i) => (item.order = i));
-      if (this.activePage === "products") {
-        this.saveProducts();
-      } else {
-        this.saveCategories();
+      try {
+        for (const item of items) {
+          if (this.activePage === "products") {
+            await SupaDB.saveProduct(item);
+          } else {
+            await SupaDB.saveCategory(item);
+          }
+        }
+        this.toast("ترتیب به‌روزرسانی شد");
+      } catch {
+        this.toast("به‌روزرسانی ترتیب ناموفق بود", "error");
       }
       this.dragStartIndex = null;
-      this.toast("ترتیب به‌روزرسانی شد");
     },
 
     // Reset to defaults
-    resetToDefaults() {
+    async resetToDefaults() {
       this.categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
       this.products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
       this.cafeInfo = JSON.parse(JSON.stringify(DEFAULT_CAFE_INFO));
       this.contentForm = { ...this.cafeInfo };
-      this.saveCategories();
-      this.saveProducts();
-      this.saveCafeInfo();
-      this.toast("داده‌ها به حالت اولیه بازگشت");
+      try {
+        for (const cat of this.categories) {
+          await SupaDB.saveCategory(cat);
+        }
+        for (const prod of this.products) {
+          await SupaDB.saveProduct(prod);
+        }
+        await SupaDB.saveCafeInfo({ id: "singleton", ...this.cafeInfo });
+        this.toast("داده‌ها به حالت اولیه بازگشت");
+      } catch {
+        this.toast("بازنشانی ناموفق بود", "error");
+      }
     },
 
     // Export data as JSON
@@ -335,7 +440,9 @@ document.addEventListener("alpine:init", () => {
         products: this.products,
         cafeInfo: this.cafeInfo,
       };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -346,22 +453,30 @@ document.addEventListener("alpine:init", () => {
     },
 
     // Import data from JSON
-    importData(event) {
+    async importData(event) {
       const file = event.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         try {
           const data = JSON.parse(e.target.result);
-          if (data.categories) this.categories = data.categories;
-          if (data.products) this.products = data.products;
+          if (data.categories) {
+            for (const cat of data.categories) {
+              await SupaDB.saveCategory(cat);
+            }
+            this.categories = data.categories;
+          }
+          if (data.products) {
+            for (const prod of data.products) {
+              await SupaDB.saveProduct(prod);
+            }
+            this.products = data.products;
+          }
           if (data.cafeInfo) {
+            await SupaDB.saveCafeInfo(data.cafeInfo);
             this.cafeInfo = data.cafeInfo;
             this.contentForm = { ...this.cafeInfo };
           }
-          this.saveCategories();
-          this.saveProducts();
-          this.saveCafeInfo();
           this.toast("داده‌ها با موفقیت وارد شد");
         } catch {
           this.toast("فایل نامعتبر است", "error");
@@ -373,22 +488,74 @@ document.addEventListener("alpine:init", () => {
     // Mock orders
     generateMockOrders() {
       this.orders = [
-        { id: "ORD-1001", customer: "علی محمدی", items: 3, total: 365000, status: "delivered", date: "۱۴۰۴/۰۳/۱۵" },
-        { id: "ORD-1002", customer: "سارا احمدی", items: 2, total: 240000, status: "preparing", date: "۱۴۰۴/۰۳/۱۵" },
-        { id: "ORD-1003", customer: "رضا کریمی", items: 5, total: 590000, status: "delivered", date: "۱۴۰۴/۰۳/۱۴" },
-        { id: "ORD-1004", customer: "مریم حسینی", items: 1, total: 125000, status: "pending", date: "۱۴۰۴/۰۳/۱۴" },
-        { id: "ORD-1005", customer: "محمد رضایی", items: 4, total: 480000, status: "delivered", date: "۱۴۰۴/۰۳/۱۳" },
-        { id: "ORD-1006", customer: "زهرا نوری", items: 2, total: 230000, status: "cancelled", date: "۱۴۰۴/۰۳/۱۳" },
+        {
+          id: "ORD-1001",
+          customer: "علی محمدی",
+          items: 3,
+          total: 365000,
+          status: "delivered",
+          date: "۱۴۰۴/۰۳/۱۵",
+        },
+        {
+          id: "ORD-1002",
+          customer: "سارا احمدی",
+          items: 2,
+          total: 240000,
+          status: "preparing",
+          date: "۱۴۰۴/۰۳/۱۵",
+        },
+        {
+          id: "ORD-1003",
+          customer: "رضا کریمی",
+          items: 5,
+          total: 590000,
+          status: "delivered",
+          date: "۱۴۰۴/۰۳/۱۴",
+        },
+        {
+          id: "ORD-1004",
+          customer: "مریم حسینی",
+          items: 1,
+          total: 125000,
+          status: "pending",
+          date: "۱۴۰۴/۰۳/۱۴",
+        },
+        {
+          id: "ORD-1005",
+          customer: "محمد رضایی",
+          items: 4,
+          total: 480000,
+          status: "delivered",
+          date: "۱۴۰۴/۰۳/۱۳",
+        },
+        {
+          id: "ORD-1006",
+          customer: "زهرا نوری",
+          items: 2,
+          total: 230000,
+          status: "cancelled",
+          date: "۱۴۰۴/۰۳/۱۳",
+        },
       ];
     },
 
     statusBadgeClass(status) {
-      const map = { delivered: "badge-green", preparing: "badge-blue", pending: "badge-gold", cancelled: "badge-red" };
+      const map = {
+        delivered: "badge-green",
+        preparing: "badge-blue",
+        pending: "badge-gold",
+        cancelled: "badge-red",
+      };
       return map[status] || "badge-gold";
     },
 
     statusLabel(status) {
-      const map = { delivered: "تحویل شده", preparing: "در حال آماده‌سازی", pending: "در انتظار", cancelled: "لغو شده" };
+      const map = {
+        delivered: "تحویل شده",
+        preparing: "در حال آماده‌سازی",
+        pending: "در انتظار",
+        cancelled: "لغو شده",
+      };
       return map[status] || status;
     },
 

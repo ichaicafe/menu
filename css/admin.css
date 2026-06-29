@@ -446,6 +446,57 @@ body.admin-body {
 .badge-red { background: rgba(231, 76, 90, 0.15); color: var(--admin-red); }
 .badge-blue { background: rgba(96, 165, 250, 0.15); color: var(--admin-blue); }
 
+/* ── Login Screen ── */
+.login-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--admin-bg);
+  padding: 1rem;
+}
+
+.login-box {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--admin-gold);
+}
+
+/* ── Upload Area ── */
+.upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  border: 2px dashed var(--admin-border);
+  border-radius: var(--admin-radius);
+  cursor: pointer;
+  transition: var(--admin-transition);
+  text-align: center;
+}
+
+.upload-area:hover {
+  border-color: var(--admin-gold);
+  background: var(--admin-gold-glow);
+}
+
+.upload-area.uploading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
