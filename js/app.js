@@ -21,6 +21,7 @@ document.addEventListener("alpine:init", () => {
       SupaDB.init();
       await this.loadData();
       this.loadFavorites();
+      this.trackVisit();
       // Simulate brief load for skeleton effect
       setTimeout(() => {
         this.isLoaded = true;
@@ -38,6 +39,12 @@ document.addEventListener("alpine:init", () => {
       // Sort by order
       this.categories.sort((a, b) => a.order - b.order);
       this.products.sort((a, b) => a.order - b.order);
+    },
+
+    // Track site visits
+    trackVisit() {
+      const visits = Utils.getStorage("cafe_visit_count", 0) + 1;
+      Utils.setStorage("cafe_visit_count", visits);
     },
 
     // Favorites

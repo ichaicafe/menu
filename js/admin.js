@@ -1,7 +1,7 @@
 /**
  * admin.js — Admin panel logic (Alpine.js)
- * Full CRUD for products, categories, and cafe info via Supabase.
- * Includes: auth, dashboard stats, searchable tables, modals, image upload, toast notifications.
+ * CRUD for products and categories via Supabase with localStorage fallback.
+ * Includes: auth, dashboard stats, searchable tables, modals, image upload, toast.
  */
 
 document.addEventListener("alpine:init", () => {
@@ -9,7 +9,7 @@ document.addEventListener("alpine:init", () => {
     // Layout state
     activePage: "dashboard",
     sidebarOpen: false,
-    darkMode: true,
+    darkMode: false,
 
     // Auth state
     isAuthenticated: false,
@@ -21,8 +21,6 @@ document.addEventListener("alpine:init", () => {
     // Data
     categories: [],
     products: [],
-    cafeInfo: {},
-    orders: [],
 
     // UI state
     searchQuery: "",
@@ -58,13 +56,9 @@ document.addEventListener("alpine:init", () => {
       icon: "",
     },
 
-    // Content form
-    contentForm: {},
-
     // Init
     async init() {
       this.loadTheme();
-      this.generateMockOrders();
 
       if (SupaDB.init()) {
         const session = await SupaDB.getSession();
@@ -79,8 +73,6 @@ document.addEventListener("alpine:init", () => {
       if (!SupaDB.ready) {
         this.categories = Utils.getStorage("cafe_categories", DEFAULT_CATEGORIES);
         this.products = Utils.getStorage("cafe_products", DEFAULT_PRODUCTS);
-        this.cafeInfo = Utils.getStorage("cafe_info", DEFAULT_CAFE_INFO);
-        this.contentForm = { ...this.cafeInfo };
         this.categories.sort((a, b) => a.order - b.order);
         this.products.sort((a, b) => a.order - b.order);
         this.isAuthenticated = true;
@@ -111,22 +103,19 @@ document.addEventListener("alpine:init", () => {
       this.isAuthenticated = false;
       this.categories = [];
       this.products = [];
-      this.cafeInfo = {};
     },
 
     // Data management
     async loadData() {
       this.categories = await SupaDB.fetchCategories();
       this.products = await SupaDB.fetchProducts();
-      this.cafeInfo = await SupaDB.fetchCafeInfo();
-      this.contentForm = { ...this.cafeInfo };
       this.categories.sort((a, b) => a.order - b.order);
       this.products.sort((a, b) => a.order - b.order);
     },
 
     // Theme
     loadTheme() {
-      this.darkMode = Utils.getStorage("admin_dark_mode", true);
+      this.darkMode = Utils.getStorage("admin_dark_mode", false);
     },
 
     toggleTheme() {
@@ -155,10 +144,8 @@ document.addEventListener("alpine:init", () => {
     get featuredCount() {
       return this.products.filter((p) => p.is_featured).length;
     },
-    get averagePrice() {
-      if (!this.products.length) return 0;
-      const sum = this.products.reduce((acc, p) => acc + Number(p.price), 0);
-      return Math.round(sum / this.products.length);
+    get visitCount() {
+      return Utils.getStorage("cafe_visit_count", 0);
     },
 
     // Search
@@ -328,7 +315,6 @@ document.addEventListener("alpine:init", () => {
           );
           this.toast("محصول حذف شد");
         } else if (this.deleteType === "category") {
-          // Move products in this category to uncategorized
           for (const p of this.products) {
             if (p.category_id === this.deleteTarget.id) {
               p.category_id = "cat-1";
@@ -347,18 +333,6 @@ document.addEventListener("alpine:init", () => {
       }
       this.showDeleteModal = false;
       this.deleteTarget = null;
-    },
-
-    // Content management
-    async saveContent() {
-      try {
-        this.cafeInfo = { ...this.contentForm };
-        await SupaDB.saveCafeInfo(this.cafeInfo);
-        this.toast("اطلاعات کافه ذخیره شد");
-      } catch (e) {
-        console.error("Save cafe info failed:", e);
-        this.toast("ذخیره اطلاعات ناموفق بود", "error");
-      }
     },
 
     // Image upload
@@ -417,8 +391,6 @@ document.addEventListener("alpine:init", () => {
     async resetToDefaults() {
       this.categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
       this.products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
-      this.cafeInfo = JSON.parse(JSON.stringify(DEFAULT_CAFE_INFO));
-      this.contentForm = { ...this.cafeInfo };
       try {
         for (const cat of this.categories) {
           await SupaDB.saveCategory(cat);
@@ -426,137 +398,10 @@ document.addEventListener("alpine:init", () => {
         for (const prod of this.products) {
           await SupaDB.saveProduct(prod);
         }
-        await SupaDB.saveCafeInfo({ id: "singleton", ...this.cafeInfo });
         this.toast("داده‌ها به حالت اولیه بازگشت");
       } catch {
         this.toast("بازنشانی ناموفق بود", "error");
       }
-    },
-
-    // Export data as JSON
-    exportData() {
-      const data = {
-        categories: this.categories,
-        products: this.products,
-        cafeInfo: this.cafeInfo,
-      };
-      const blob = new Blob([JSON.stringify(data, null, 2)], {
-        type: "application/json",
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "aichai-data.json";
-      a.click();
-      URL.revokeObjectURL(url);
-      this.toast("داده‌ها خروجی گرفته شد");
-    },
-
-    // Import data from JSON
-    async importData(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const data = JSON.parse(e.target.result);
-          if (data.categories) {
-            for (const cat of data.categories) {
-              await SupaDB.saveCategory(cat);
-            }
-            this.categories = data.categories;
-          }
-          if (data.products) {
-            for (const prod of data.products) {
-              await SupaDB.saveProduct(prod);
-            }
-            this.products = data.products;
-          }
-          if (data.cafeInfo) {
-            await SupaDB.saveCafeInfo(data.cafeInfo);
-            this.cafeInfo = data.cafeInfo;
-            this.contentForm = { ...this.cafeInfo };
-          }
-          this.toast("داده‌ها با موفقیت وارد شد");
-        } catch {
-          this.toast("فایل نامعتبر است", "error");
-        }
-      };
-      reader.readAsText(file);
-    },
-
-    // Mock orders
-    generateMockOrders() {
-      this.orders = [
-        {
-          id: "ORD-1001",
-          customer: "علی محمدی",
-          items: 3,
-          total: 365000,
-          status: "delivered",
-          date: "۱۴۰۴/۰۳/۱۵",
-        },
-        {
-          id: "ORD-1002",
-          customer: "سارا احمدی",
-          items: 2,
-          total: 240000,
-          status: "preparing",
-          date: "۱۴۰۴/۰۳/۱۵",
-        },
-        {
-          id: "ORD-1003",
-          customer: "رضا کریمی",
-          items: 5,
-          total: 590000,
-          status: "delivered",
-          date: "۱۴۰۴/۰۳/۱۴",
-        },
-        {
-          id: "ORD-1004",
-          customer: "مریم حسینی",
-          items: 1,
-          total: 125000,
-          status: "pending",
-          date: "۱۴۰۴/۰۳/۱۴",
-        },
-        {
-          id: "ORD-1005",
-          customer: "محمد رضایی",
-          items: 4,
-          total: 480000,
-          status: "delivered",
-          date: "۱۴۰۴/۰۳/۱۳",
-        },
-        {
-          id: "ORD-1006",
-          customer: "زهرا نوری",
-          items: 2,
-          total: 230000,
-          status: "cancelled",
-          date: "۱۴۰۴/۰۳/۱۳",
-        },
-      ];
-    },
-
-    statusBadgeClass(status) {
-      const map = {
-        delivered: "badge-green",
-        preparing: "badge-blue",
-        pending: "badge-gold",
-        cancelled: "badge-red",
-      };
-      return map[status] || "badge-gold";
-    },
-
-    statusLabel(status) {
-      const map = {
-        delivered: "تحویل شده",
-        preparing: "در حال آماده‌سازی",
-        pending: "در انتظار",
-        cancelled: "لغو شده",
-      };
-      return map[status] || status;
     },
 
     formatPrice(toman) {
