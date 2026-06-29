@@ -110,12 +110,22 @@ document.addEventListener("alpine:init", () => {
         list = list.filter((p) => p.category_id === this.activeCategory);
       }
       if (this.searchQuery.trim()) {
-        const q = this.searchQuery.trim();
-        list = list.filter(
-          (p) =>
-            p.name_fa.includes(q) ||
-            p.description_fa.includes(q)
-        );
+        const q = this.searchQuery.trim().toLowerCase();
+        list = list
+          .filter(
+            (p) =>
+              p.name_fa.includes(q) ||
+              p.description_fa.includes(q)
+          )
+          .map((p) => {
+            const name = p.name_fa.toLowerCase();
+            let score = 0;
+            if (name.startsWith(q)) score = 3;
+            else if (new RegExp("(^|[\\s،.!?])" + this._escapeRegex(q)).test(name)) score = 2;
+            else if (p.description_fa.includes(q)) score = 1;
+            return { ...p, _score: score };
+          })
+          .sort((a, b) => b._score - a._score || a.order - b.order);
       }
       return list;
     },
@@ -149,6 +159,10 @@ document.addEventListener("alpine:init", () => {
     },
 
     // Helpers
+    _escapeRegex(str) {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    },
+
     formatPrice(toman) {
       return Utils.formatPrice(toman);
     },

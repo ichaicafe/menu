@@ -358,7 +358,7 @@ document.addEventListener("alpine:init", () => {
     async executeDelete() {
       try {
         if (this.deleteType === "product") {
-          await SupaDB.deleteProduct(this.deleteTarget.id, this.deleteTarget.image_url);
+          await SupaDB.deleteProduct(this.deleteTarget.id);
           this.products = this.products.filter(
             (p) => p.id !== this.deleteTarget.id
           );

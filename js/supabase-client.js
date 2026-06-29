@@ -115,15 +115,37 @@ const SupaDB = {
     return data;
   },
 
-  async deleteProduct(id, imageUrl) {
+  async deleteProduct(id) {
     if (!this.ready) return this._localDelete("cafe_products", id);
+    const { data: product, error: fetchError } = await this.client
+      .from("products")
+      .select("id, image_url")
+      .eq("id", id)
+      .single();
+    if (fetchError) throw fetchError;
+
+    const imageUrl = product?.image_url;
+
+    if (imageUrl) {
+      await this._clearImageField(id);
+      await this._deleteStorageFile(imageUrl);
+    }
+
     const { error } = await this.client
       .from("products")
       .delete()
       .eq("id", id);
     if (error) throw error;
-    if (imageUrl) {
-      await this._deleteStorageFile(imageUrl);
+  },
+
+  async _clearImageField(id) {
+    try {
+      await this.client
+        .from("products")
+        .update({ image_url: null })
+        .eq("id", id);
+    } catch (e) {
+      console.warn("Clear image field failed:", e);
     }
   },
 

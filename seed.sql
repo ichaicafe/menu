@@ -16,7 +16,11 @@ CREATE TABLE IF NOT EXISTS public.products (
   image_url TEXT,
   is_featured BOOLEAN DEFAULT false,
   "order" INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  search_vector tsvector GENERATED ALWAYS AS (
+    setweight(to_tsvector('simple', coalesce(name_fa, '')), 'A') ||
+    setweight(to_tsvector('simple', coalesce(description_fa, '')), 'B')
+  ) STORED
 );
 
 CREATE TABLE IF NOT EXISTS public.cafe_info (
@@ -34,12 +38,18 @@ CREATE TABLE IF NOT EXISTS public.cafe_info (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 2. Enable Row Level Security (RLS) on all tables
+-- 2. Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_products_search ON public.products USING gin (search_vector);
+CREATE INDEX IF NOT EXISTS idx_products_category ON public.products (category_id);
+CREATE INDEX IF NOT EXISTS idx_products_order ON public.products ("order");
+CREATE INDEX IF NOT EXISTS idx_categories_order ON public.categories ("order");
+
+-- 3. Enable Row Level Security (RLS) on all tables
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cafe_info ENABLE ROW LEVEL SECURITY;
 
--- 3. Policies for public (anonymous) read access
+-- 4. Policies for public (anonymous) read access
 DROP POLICY IF EXISTS "Public read categories" ON public.categories;
 CREATE POLICY "Public read categories" ON public.categories FOR SELECT USING (true);
 
@@ -49,17 +59,53 @@ CREATE POLICY "Public read products" ON public.products FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Public read cafe_info" ON public.cafe_info;
 CREATE POLICY "Public read cafe_info" ON public.cafe_info FOR SELECT USING (true);
 
--- 4. Policies for authenticated (admin) full access
+-- 5. Policies for authenticated (admin) INSERT/UPDATE/DELETE (split from SELECT to avoid multiple permissive)
+DROP POLICY IF EXISTS "Admin insert categories" ON public.categories;
+CREATE POLICY "Admin insert categories" ON public.categories FOR INSERT
+  TO authenticated WITH CHECK ((select auth.role()) = 'authenticated');
+
+DROP POLICY IF EXISTS "Admin update categories" ON public.categories;
+CREATE POLICY "Admin update categories" ON public.categories FOR UPDATE
+  TO authenticated USING ((select auth.role()) = 'authenticated')
+  WITH CHECK ((select auth.role()) = 'authenticated');
+
+DROP POLICY IF EXISTS "Admin delete categories" ON public.categories;
+CREATE POLICY "Admin delete categories" ON public.categories FOR DELETE
+  TO authenticated USING ((select auth.role()) = 'authenticated');
+
 DROP POLICY IF EXISTS "Admin all categories" ON public.categories;
-CREATE POLICY "Admin all categories" ON public.categories FOR ALL USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Admin insert products" ON public.products;
+CREATE POLICY "Admin insert products" ON public.products FOR INSERT
+  TO authenticated WITH CHECK ((select auth.role()) = 'authenticated');
+
+DROP POLICY IF EXISTS "Admin update products" ON public.products;
+CREATE POLICY "Admin update products" ON public.products FOR UPDATE
+  TO authenticated USING ((select auth.role()) = 'authenticated')
+  WITH CHECK ((select auth.role()) = 'authenticated');
+
+DROP POLICY IF EXISTS "Admin delete products" ON public.products;
+CREATE POLICY "Admin delete products" ON public.products FOR DELETE
+  TO authenticated USING ((select auth.role()) = 'authenticated');
 
 DROP POLICY IF EXISTS "Admin all products" ON public.products;
-CREATE POLICY "Admin all products" ON public.products FOR ALL USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Admin insert cafe_info" ON public.cafe_info;
+CREATE POLICY "Admin insert cafe_info" ON public.cafe_info FOR INSERT
+  TO authenticated WITH CHECK ((select auth.role()) = 'authenticated');
+
+DROP POLICY IF EXISTS "Admin update cafe_info" ON public.cafe_info;
+CREATE POLICY "Admin update cafe_info" ON public.cafe_info FOR UPDATE
+  TO authenticated USING ((select auth.role()) = 'authenticated')
+  WITH CHECK ((select auth.role()) = 'authenticated');
+
+DROP POLICY IF EXISTS "Admin delete cafe_info" ON public.cafe_info;
+CREATE POLICY "Admin delete cafe_info" ON public.cafe_info FOR DELETE
+  TO authenticated USING ((select auth.role()) = 'authenticated');
 
 DROP POLICY IF EXISTS "Admin all cafe_info" ON public.cafe_info;
-CREATE POLICY "Admin all cafe_info" ON public.cafe_info FOR ALL USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
 
--- 5. Seed data (insert initial values)
+-- 6. Seed data (insert initial values)
 INSERT INTO public.categories (id, name_fa, icon, "order") VALUES
   ('cat-1', 'همه', '✦', 0),
   ('cat-2', 'قهوه‌های گرم', '☕️', 1),
@@ -105,8 +151,7 @@ INSERT INTO public.products (id, category_id, name_fa, description_fa, price, im
 ON CONFLICT (id) DO NOTHING;
 
 -- ═══════════════════════════════════════════════════
--- Feedbacks table (انتقادات و پیشنهادات)
--- Run this in the Supabase SQL Editor
+-- Feedbacks table
 -- ═══════════════════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS public.feedbacks (
@@ -118,7 +163,6 @@ CREATE TABLE IF NOT EXISTS public.feedbacks (
 
 CREATE INDEX IF NOT EXISTS idx_feedbacks_created_at ON public.feedbacks (created_at);
 
--- Row Level Security: allow anonymous inserts, authenticated reads/deletes
 ALTER TABLE public.feedbacks ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow anonymous insert" ON public.feedbacks;
@@ -127,22 +171,24 @@ CREATE POLICY "Allow anonymous insert" ON public.feedbacks
 
 DROP POLICY IF EXISTS "Allow authenticated select" ON public.feedbacks;
 CREATE POLICY "Allow authenticated select" ON public.feedbacks
-  FOR SELECT USING (auth.role() = 'authenticated');
+  FOR SELECT TO authenticated USING ((select auth.role()) = 'authenticated');
 
 DROP POLICY IF EXISTS "Allow authenticated delete" ON public.feedbacks;
 CREATE POLICY "Allow authenticated delete" ON public.feedbacks
-  FOR DELETE USING (auth.role() = 'authenticated');
+  FOR DELETE TO authenticated USING ((select auth.role()) = 'authenticated');
 
--- Auto-delete function: removes feedbacks older than 7 days
+-- Auto-delete function with safe search_path
 CREATE OR REPLACE FUNCTION delete_old_feedbacks()
-RETURNS void AS $$
+RETURNS void
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
 BEGIN
   DELETE FROM public.feedbacks WHERE created_at < now() - INTERVAL '7 days';
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Schedule daily cleanup at 3 AM via pg_cron (requires pg_cron extension)
--- Enable pg_cron in Supabase Dashboard → Database → Extensions first
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
@@ -167,10 +213,8 @@ CREATE POLICY "Authenticated users can upload images"
 ON storage.objects FOR INSERT TO authenticated
 WITH CHECK (bucket_id = 'cafe-images');
 
+-- Public bucket allows direct URL access; no broad SELECT policy needed (fixes public_bucket_allows_listing)
 DROP POLICY IF EXISTS "Anyone can view images" ON storage.objects;
-CREATE POLICY "Anyone can view images"
-ON storage.objects FOR SELECT
-USING (bucket_id = 'cafe-images');
 
 DROP POLICY IF EXISTS "Authenticated users can delete images" ON storage.objects;
 CREATE POLICY "Authenticated users can delete images"
