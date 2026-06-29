@@ -136,7 +136,7 @@
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(40,167,69,0.1);color:var(--admin-green)">⭐</div>
           <div class="stat-number" x-text="toPersianNum(featuredCount)">۵</div>
-          <div class="stat-label">محصولات ویژه</div>
+          <div class="stat-label">محصولات محبوب</div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(220,53,69,0.1);color:var(--admin-red)">👁</div>
@@ -184,7 +184,7 @@
                 <th>نام محصول</th>
                 <th>دسته‌بندی</th>
                 <th>قیمت</th>
-                <th>ویژه</th>
+                <th>محبوب</th>
                 <th>عملیات</th>
               </tr>
             </thead>
@@ -206,7 +206,7 @@
                   <td><span class="badge badge-gold" x-text="getCategoryName(product.category_id)"></span></td>
                   <td class="font-bold" style="color:var(--admin-gold)" x-text="formatPrice(product.price)"></td>
                   <td>
-                    <span x-show="product.is_featured" class="badge badge-green">ویژه</span>
+                    <span x-show="product.is_featured" class="badge badge-green">محبوب</span>
                     <span x-show="!product.is_featured" class="text-xs" style="color:var(--admin-text-muted)">—</span>
                   </td>
                   <td>
@@ -319,7 +319,7 @@
       <div class="form-group">
         <label class="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" x-model="productForm.is_featured" class="w-4 h-4 rounded" style="accent-color:var(--admin-gold)">
-          <span class="text-sm" style="color:var(--admin-text)">محصول ویژه</span>
+          <span class="text-sm" style="color:var(--admin-text)">محصول محبوب</span>
         </label>
       </div>
 

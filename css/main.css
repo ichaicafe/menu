@@ -4,7 +4,7 @@
  * High-contrast text for excellent readability.
  */
 
-/* ── CSS Custom Properties ── */
+/* ── CSS Custom Properties (Light Mode) ── */
 :root {
   --cafe-black: #1c1612;
   --cafe-darker: #2a2018;
@@ -15,14 +15,15 @@
   --cafe-gold-light: #d4a843;
   --cafe-gold-glow: rgba(184, 134, 11, 0.12);
   --cafe-yellow: #e8c547;
-  --cafe-cream: #3d2e1f;
-  --cafe-white: #1a1410;
+  --cafe-cream: #f0e9df;
+  --cafe-white: #faf6f0;
   --cafe-text: #3d2e1f;
   --cafe-text-muted: #7a6b5a;
   --cafe-border: rgba(45, 33, 23, 0.12);
   --cafe-bg: #faf6f0;
   --cafe-card-bg: #ffffff;
   --cafe-footer-bg: #e8ddd0;
+  --cafe-navbar-bg: rgba(250, 246, 240, 0.9);
   --font-fa: "Vazirmatn", "Tahoma", sans-serif;
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -33,6 +34,45 @@
   --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-spring: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Dark Mode Overrides ── */
+.dark-mode {
+  --cafe-black: #f0ebe2;
+  --cafe-darker: #1a1410;
+  --cafe-dark: #241c14;
+  --cafe-brown: #2d2318;
+  --cafe-brown-light: #3d3025;
+  --cafe-text: #f0ebe2;
+  --cafe-text-muted: #a89880;
+  --cafe-border: rgba(184, 134, 11, 0.15);
+  --cafe-bg: #1a1410;
+  --cafe-card-bg: #241c14;
+  --cafe-footer-bg: #1a1410;
+  --cafe-navbar-bg: rgba(26, 20, 16, 0.92);
+  --shadow-card: 0 2px 16px rgba(0, 0, 0, 0.25);
+  --shadow-card-hover: 0 8px 32px rgba(0, 0, 0, 0.35), 0 0 16px var(--cafe-gold-glow);
+}
+
+/* Dark mode: fix elements that reference specific colors */
+.dark-mode .section-title {
+  color: var(--cafe-black);
+}
+
+.dark-mode .about-section {
+  background: linear-gradient(180deg, var(--cafe-bg) 0%, #1e1812 50%, var(--cafe-bg) 100%);
+}
+
+.dark-mode .site-footer {
+  border-top-color: rgba(184, 134, 11, 0.12);
+}
+
+.dark-mode .menu-card:hover {
+  border-color: rgba(184, 134, 11, 0.3);
+}
+
+.dark-mode .navbar.scrolled {
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
 }
 
 /* ── Base Reset ── */
@@ -184,7 +224,7 @@ body {
   z-index: 100;
   backdrop-filter: blur(20px) saturate(1.5);
   -webkit-backdrop-filter: blur(20px) saturate(1.5);
-  background: rgba(250, 246, 240, 0.9);
+  background: var(--cafe-navbar-bg);
   border-bottom: 1px solid var(--cafe-border);
   transition: var(--transition-fast);
 }
@@ -398,7 +438,7 @@ body {
   animation: favPop 0.3s ease;
 }
 
-/* Featured Badge */
+/* Popular Badge */
 .badge-featured {
   position: absolute;
   top: 0.75rem;
@@ -459,7 +499,7 @@ body {
 /* ── Footer ── */
 .site-footer {
   background: var(--cafe-footer-bg);
-  border-top: 1px solid rgba(45, 33, 23, 0.15);
+  border-top: 1px solid var(--cafe-border);
   color: var(--cafe-text-muted);
 }
 

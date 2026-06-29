@@ -15,12 +15,15 @@ document.addEventListener("alpine:init", () => {
     favorites: [],
     isLoaded: false,
     showMobileMenu: false,
+    darkMode: false,
+    showFavorites: false,
 
     // Init
     async init() {
       SupaDB.init();
       await this.loadData();
       this.loadFavorites();
+      this.loadDarkMode();
       this.trackVisit();
       // Simulate brief load for skeleton effect
       setTimeout(() => {
@@ -52,6 +55,33 @@ document.addEventListener("alpine:init", () => {
       this.favorites = Utils.getStorage("cafe_favorites", []);
     },
 
+    // Dark mode
+    loadDarkMode() {
+      this.darkMode = Utils.getStorage("cafe_dark_mode", false);
+      if (this.darkMode) {
+        document.body.classList.add("dark-mode");
+      }
+    },
+
+    toggleTheme() {
+      this.darkMode = !this.darkMode;
+      document.body.classList.toggle("dark-mode", this.darkMode);
+      Utils.setStorage("cafe_dark_mode", this.darkMode);
+    },
+
+    // Favorites view
+    setShowFavorites(val) {
+      this.showFavorites = val;
+      if (val) {
+        this.activeCategory = "cat-1";
+        this.searchQuery = "";
+      }
+    },
+
+    get favoriteProducts() {
+      return this.products.filter((p) => this.favorites.includes(p.id));
+    },
+
     toggleFavorite(productId) {
       const idx = this.favorites.indexOf(productId);
       if (idx > -1) {
@@ -72,7 +102,9 @@ document.addEventListener("alpine:init", () => {
     },
 
     get filteredProducts() {
-      let list = this.products;
+      let list = this.showFavorites
+        ? this.favoriteProducts
+        : this.products;
       if (this.activeCategory !== "cat-1") {
         list = list.filter((p) => p.category_id === this.activeCategory);
       }
