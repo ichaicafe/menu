@@ -236,6 +236,10 @@ document.addEventListener("alpine:init", () => {
         this.toast("لطفاً نام و قیمت محصول را وارد کنید", "error");
         return;
       }
+      if (!this.productForm.category_id) {
+        this.toast("لطفاً دسته‌بندی را انتخاب کنید", "error");
+        return;
+      }
       this.saving = true;
 
       try {
@@ -273,7 +277,8 @@ document.addEventListener("alpine:init", () => {
         this.showProductModal = false;
       } catch (e) {
         console.error("Save product failed:", e);
-        this.toast("ذخیره محصول ناموفق بود. دوباره تلاش کنید", "error");
+        const msg = e?.message || e?.error_description || "خطای ناشناخته";
+        this.toast("ذخیره محصول ناموفق بود: " + msg, "error");
       }
       this.saving = false;
     },
