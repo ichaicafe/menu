@@ -17,6 +17,7 @@ document.addEventListener("alpine:init", () => {
     showMobileMenu: false,
     darkMode: false,
     showFavPanel: false,
+    _observer: null,
 
     // Feedback state
     feedbackForm: { name: "", message: "" },
@@ -102,6 +103,7 @@ document.addEventListener("alpine:init", () => {
     // Filtering
     setCategory(catId) {
       this.activeCategory = catId;
+      this.$nextTick(() => this.observeFadeIns());
     },
 
     get filteredProducts() {
@@ -177,20 +179,21 @@ document.addEventListener("alpine:init", () => {
 
     // Scroll-triggered fade-in via IntersectionObserver
     observeFadeIns() {
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add("visible");
-              observer.unobserve(entry.target);
-            }
-          });
-        },
-        { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
-      );
-
-      document.querySelectorAll(".fade-in").forEach((el) => {
-        observer.observe(el);
+      if (!this._observer) {
+        this._observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("visible");
+                this._observer.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
+        );
+      }
+      document.querySelectorAll(".fade-in:not(.visible)").forEach((el) => {
+        this._observer.observe(el);
       });
     },
 
