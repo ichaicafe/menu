@@ -27,6 +27,18 @@ document.addEventListener("alpine:init", () => {
 
     // Init
     init() {
+      // Hero entrance: opt into the CSS animation on first paint.
+      // Two rAFs ensure the browser committed the initial state first,
+      // so the transition actually plays instead of jumping.
+      const hero = document.getElementById("heroContent");
+      if (hero && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        hero.classList.add("hero-in-start");
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            hero.classList.add("hero-in-end");
+          });
+        });
+      }
       // 1) Instant paint: show cached data NOW (no network wait for text/hero).
       this.categories = Utils.getStorage("cafe_categories", DEFAULT_CATEGORIES);
       this.products = Utils.getStorage("cafe_products", DEFAULT_PRODUCTS);
@@ -225,16 +237,12 @@ document.addEventListener("alpine:init", () => {
           { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
         );
       }
+      // No getBoundingClientRect pre-check here: it forces a sync layout
+      // per element on the main thread. IntersectionObserver fires
+      // immediately for in-viewport elements, so just observe all.
       document.querySelectorAll(".fade-in:not(.visible)").forEach((el) => {
-        // Mark as JS-animated (CSS base state stays visible for no-JS),
-        // then reveal immediately if already in viewport.
         el.classList.add("js-anim");
-        const r = el.getBoundingClientRect();
-        if (r.top < window.innerHeight && r.bottom > 0) {
-          el.classList.add("visible");
-        } else {
-          this._observer.observe(el);
-        }
+        this._observer.observe(el);
       });
     },
 
