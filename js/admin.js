@@ -77,6 +77,11 @@ document.addEventListener("alpine:init", () => {
     async init() {
       this.loadTheme();
 
+      // Supabase lib is lazy: ensure it is present before init (no-op offline)
+      if (typeof window.__ensureSupabase === "function") {
+        await window.__ensureSupabase();
+      }
+
       if (SupaDB.init()) {
         const session = await SupaDB.getSession();
         if (session) {

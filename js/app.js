@@ -26,16 +26,25 @@ document.addEventListener("alpine:init", () => {
     feedbackError: "",
 
     // Init
-    async init() {
-      SupaDB.init();
-      await this.loadData();
-      this.loadFavorites();
-      this.loadDarkMode();
-      this.trackVisit();
-      setTimeout(() => {
-        this.isLoaded = true;
-        this.$nextTick(() => this.observeFadeIns());
-      }, 600);
+    init() {
+      const start = () => {
+        SupaDB.init();
+        this.loadData().then(() => {
+          this.loadFavorites();
+          this.loadDarkMode();
+          this.trackVisit();
+          setTimeout(() => {
+            this.isLoaded = true;
+            this.$nextTick(() => this.observeFadeIns());
+          }, 600);
+        });
+      };
+      // Supabase lib is lazy: ensure it is present before init (no-op offline)
+      if (typeof window.__ensureSupabase === "function") {
+        window.__ensureSupabase().then(start);
+      } else {
+        start();
+      }
       this.setupNavbar();
     },
 

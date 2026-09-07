@@ -1,5 +1,11 @@
 /* AUTO-GENERATED: original Supabase Storage URL -> optimized local asset */
 const IMG_MAP = {
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782800607959-h2hvth.webp": "img/w640/1782800607959-h2hvth.webp",
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782796066584-73nj6m.webp": "img/w640/1782796066584-73nj6m.webp",
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782796019264-rig0fn.webp": "img/w640/1782796019264-rig0fn.webp",
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782795500670-j5pr6l.webp": "img/w640/1782795500670-j5pr6l.webp",
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782795424824-sgl610.webp": "img/w640/1782795424824-sgl610.webp",
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782794879765-223izw.webp": "img/w640/1782794879765-223izw.webp",
  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782794989949-b7yu7y.webp": "img/w640/1782794989949-b7yu7y.webp",
  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782795120849-y6utis.webp": "img/w640/1782795120849-y6utis.webp",
  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782795272273-l61dni.webp": "img/w640/1782795272273-l61dni.webp",
@@ -38,6 +44,12 @@ const IMG_MAP = {
  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782802853466-uyl2gj.webp": "img/w640/1782802853466-uyl2gj.webp"
 };
 const IMG_DIMS = {
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782800607959-h2hvth.webp": [640, 640],
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782796066584-73nj6m.webp": [640, 640],
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782796019264-rig0fn.webp": [640, 640],
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782795500670-j5pr6l.webp": [640, 640],
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782795424824-sgl610.webp": [640, 640],
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782794879765-223izw.webp": [640, 640],
  "img/w640/1782794989949-b7yu7y.webp": [
   640,
   640
