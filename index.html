@@ -5,45 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>کافه آی‌چای — منوی دیجیتال</title>
   <meta name="description" content="منوی دیجیتال کافه آی‌چای — تجربه‌ای ناب از طعم و آرامش">
-  <link rel="icon" type="image/webp" href="logo/no-background-logo-1.webp">
+  <link rel="icon" type="image/webp" href="img/logo-128.webp">
 
-  <!-- Local Vazirmatn Font -->
-  <link rel="stylesheet" href="fonts/fonts.css">
+  <!-- Vazirmatn (subset, weights actually used only) -->
+  <link rel="stylesheet" href="fonts/fonts-subset.css">
+  <!-- Persian title (LCP) font preload -->
+  <link rel="preload" href="fonts/subset/Vazirmatn-Black-sub.woff2" as="font" type="font/woff2" crossorigin>
 
-  <!-- Tailwind CSS (local) -->
-  <script src="lib/tailwindcss.js"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: { fa: ['Vazirmatn', 'Tahoma', 'sans-serif'] },
-          colors: {
-            cafe: {
-              black: '#1c1612',
-              darker: '#2a2018',
-              dark: '#faf6f0',
-              brown: '#e8ddd0',
-              'brown-light': '#d4c4b0',
-              gold: '#b8860b',
-              'gold-light': '#d4a843',
-              yellow: '#e8c547',
-              cream: '#f0e9df',
-              white: '#faf6f0',
-              text: '#3d2e1f',
-              'text-muted': '#7a6b5a',
-            }
-          }
-        }
-      }
-    };
-  </script>
+  <!-- Tailwind: purged static build (was 407 KiB runtime, now ~12 KiB) -->
+  <link rel="stylesheet" href="css/tw.min.css">
 
   <!-- Alpine.js (local) -->
   <script defer src="lib/alpine.min.js"></script>
 
-  <!-- Custom CSS -->
-  <link rel="stylesheet" href="css/main.css">
+  <!-- Custom CSS (minified) -->
+  <link rel="stylesheet" href="css/main.min.css">
+
+  <!-- Hero background: preload resized local image -->
+  <link rel="preload" as="image" href="img/hero-bg.webp" fetchpriority="high">
+  <style>.hero-bg{background-image:url('img/hero-bg.webp');background-position:center;background-size:cover;background-repeat:no-repeat}</style>
 </head>
 
 <body class="font-cafe" x-data="cafeMenu" x-cloak>
@@ -53,7 +33,7 @@
     <div class="hero-bg"></div>
     <div class="hero-overlay"></div>
     <div class="hero-content">
-      <img src="logo/logo-1.webp" alt="کافه آی‌چای" class="hero-logo">
+      <img src="img/logo-hero-280.webp" alt="کافه آی‌چای" class="hero-logo" width="280" height="280" decoding="async">
       <p class="text-sm font-medium tracking-widest mb-4" style="letter-spacing:0.2em;color:var(--cafe-gold-light)">✦ خوش آمدید ✦</p>
       <h1 class="hero-title">
         <span class="gold" x-text="cafeInfo.name">کافه آی‌چای</span>
@@ -81,7 +61,7 @@
       <div class="flex items-center justify-between h-16">
         <!-- Logo -->
         <a href="#hero" @click.prevent="scrollTo('hero')" class="flex items-center gap-2">
-          <img src="logo/no-background-logo-1.webp" alt="کافه آی‌چای" class="navbar-logo">
+          <img src="img/logo-128.webp" alt="کافه آی‌چای" class="navbar-logo" width="128" height="128" decoding="async">
           <span class="text-lg font-black tracking-tight" style="color:var(--cafe-gold)" x-text="cafeInfo.name">کافه آی‌چای</span>
         </a>
 
@@ -198,7 +178,7 @@
           <div class="menu-card fade-in">
             <div class="card-image-wrapper">
               <span class="badge-featured">محبوب</span>
-              <img :src="product.image_url" :alt="product.name_fa" class="card-image" loading="lazy">
+              <img :src="prodImg(product)" :alt="product.name_fa" class="card-image" loading="lazy" decoding="async" :width="prodW(product)" :height="prodH(product)">
             </div>
             <div class="card-body">
               <h3 class="card-name" x-text="product.name_fa"></h3>
@@ -269,7 +249,7 @@
           <div class="menu-card fade-in">
             <div class="card-image-wrapper">
               <span x-show="product.is_featured" class="badge-featured">محبوب</span>
-              <img :src="product.image_url" :alt="product.name_fa" class="card-image" loading="lazy">
+              <img :src="prodImg(product)" :alt="product.name_fa" class="card-image" loading="lazy" decoding="async" :width="prodW(product)" :height="prodH(product)">
             </div>
             <div class="card-body">
               <h3 class="card-name" x-text="product.name_fa"></h3>
@@ -316,7 +296,7 @@
 
       <div class="fade-in mt-8">
         <div class="rounded-2xl p-8 sm:p-12 text-center" style="background:var(--cafe-card-bg);border:1px solid var(--cafe-border)">
-          <img src="logo/logo-1.webp" alt="کافه آی‌چای" style="height:80px;width:80px;border-radius:50%;object-fit:cover;margin:0 auto 1.5rem;display:block">
+          <img src="img/logo-hero-280.webp" alt="کافه آی‌چای" style="height:80px;width:80px;border-radius:50%;object-fit:cover;margin:0 auto 1.5rem;display:block" width="280" height="280" decoding="async" loading="lazy">
           <p class="text-lg sm:text-xl leading-relaxed font-light" style="color:var(--cafe-text)" x-text="cafeInfo.about_fa"></p>
           <div class="mt-8 flex items-center justify-center gap-2" style="color:var(--cafe-gold)">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -381,7 +361,7 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
         <!-- Brand -->
         <div>
-          <img src="logo/no-background-logo-1.webp" alt="کافه آی‌چای" class="footer-logo">
+          <img src="img/logo-128.webp" alt="کافه آی‌چای" class="footer-logo" width="128" height="128" decoding="async" loading="lazy">
           <h3 class="text-xl font-black mb-3" style="color:var(--cafe-gold)" x-text="cafeInfo.name">کافه آی‌چای</h3>
           <p class="text-sm leading-relaxed" style="color:var(--cafe-text-muted)" x-text="cafeInfo.tagline"></p>
           <div class="flex gap-3 mt-4">
@@ -484,7 +464,7 @@
       <!-- Favorites list -->
       <template x-for="product in favoriteProducts" :key="product.id">
         <div class="fav-panel-item">
-          <img :src="product.image_url" :alt="product.name_fa" class="fav-panel-item-img" loading="lazy">
+          <img :src="prodImg(product)" :alt="product.name_fa" class="fav-panel-item-img" loading="lazy" decoding="async" :width="prodW(product)" :height="prodH(product)">
           <div class="fav-panel-item-info">
             <div class="fav-panel-item-name" x-text="product.name_fa"></div>
             <div class="fav-panel-item-price" x-text="formatPrice(product.price)"></div>
@@ -502,11 +482,12 @@
   </div>
 
   <!-- Scripts -->
-  <script src="lib/supabase.min.js"></script>
-  <script src="js/config.js"></script>
-  <script src="js/utils.js"></script>
-  <script src="js/data.js"></script>
-  <script src="js/supabase-client.js"></script>
-  <script src="js/app.js"></script>
+  <script defer src="lib/supabase.min.js"></script>
+  <script src="js/config.min.js"></script>
+  <script src="js/img-map.min.js"></script>
+  <script src="js/utils.min.js"></script>
+  <script src="js/data.min.js"></script>
+  <script src="js/supabase-client.min.js"></script>
+  <script src="js/app.min.js"></script>
 </body>
 </html>

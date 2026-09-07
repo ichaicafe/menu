@@ -160,6 +160,20 @@ document.addEventListener("alpine:init", () => {
     },
 
     // Helpers
+    // Image optimization: map original Supabase URLs to local resized assets
+    prodImg(p) {
+      const u = p && p.image_url;
+      return (typeof IMG_MAP !== "undefined" && u && IMG_MAP[u]) || u || "";
+    },
+    prodW(p) {
+      const rel = this.prodImg(p);
+      return (typeof IMG_DIMS !== "undefined" && IMG_DIMS[rel]) ? IMG_DIMS[rel][0] : 640;
+    },
+    prodH(p) {
+      const rel = this.prodImg(p);
+      return (typeof IMG_DIMS !== "undefined" && IMG_DIMS[rel]) ? IMG_DIMS[rel][1] : 640;
+    },
+
     _wordMatch(haystack, needle) {
       if (!haystack || !needle) return false;
       const words = haystack.split(/[\s،.!?،\-\/]+/);
