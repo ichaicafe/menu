@@ -27,32 +27,42 @@ document.addEventListener("alpine:init", () => {
 
     // Init
     init() {
-      const start = () => {
+      // 1) Instant paint: show cached data NOW (no network wait for text/hero).
+      this.categories = Utils.getStorage("cafe_categories", DEFAULT_CATEGORIES);
+      this.products = Utils.getStorage("cafe_products", DEFAULT_PRODUCTS);
+      this.cafeInfo = Utils.getStorage("cafe_info", DEFAULT_CAFE_INFO);
+      this.loadFavorites();
+      this.loadDarkMode();
+      this.trackVisit();
+      this.isLoaded = true;
+      this.$nextTick(() => this.observeFadeIns());
+      // 2) Revalidate in background (parallel fetches, then refresh UI).
+      const refresh = () => {
         SupaDB.init();
         this.loadData().then(() => {
-          this.loadFavorites();
-          this.loadDarkMode();
-          this.trackVisit();
-          setTimeout(() => {
-            this.isLoaded = true;
-            this.$nextTick(() => this.observeFadeIns());
-          }, 600);
+          this.$nextTick(() => this.observeFadeIns());
         });
       };
-      // Supabase lib is lazy: ensure it is present before init (no-op offline)
+      // Supabase lib is lazy: ensure it is present before refresh (no-op offline)
       if (typeof window.__ensureSupabase === "function") {
-        window.__ensureSupabase().then(start);
+        window.__ensureSupabase().then(refresh);
       } else {
-        start();
+        refresh();
       }
       this.setupNavbar();
     },
 
     // Load data from Supabase with localStorage fallback
     async loadData() {
-      this.categories = await SupaDB.fetchCategories();
-      this.products = await SupaDB.fetchProducts();
-      this.cafeInfo = await SupaDB.fetchCafeInfo();
+      // Parallel fetches (was serial: 3x round-trip latency).
+      const [cats, prods, info] = await Promise.all([
+        SupaDB.fetchCategories(),
+        SupaDB.fetchProducts(),
+        SupaDB.fetchCafeInfo(),
+      ]);
+      this.categories = cats;
+      this.products = prods;
+      this.cafeInfo = info;
       this.categories.sort((a, b) => a.order - b.order);
       this.products.sort((a, b) => a.order - b.order);
     },
@@ -216,7 +226,15 @@ document.addEventListener("alpine:init", () => {
         );
       }
       document.querySelectorAll(".fade-in:not(.visible)").forEach((el) => {
-        this._observer.observe(el);
+        // Mark as JS-animated (CSS base state stays visible for no-JS),
+        // then reveal immediately if already in viewport.
+        el.classList.add("js-anim");
+        const r = el.getBoundingClientRect();
+        if (r.top < window.innerHeight && r.bottom > 0) {
+          el.classList.add("visible");
+        } else {
+          this._observer.observe(el);
+        }
       });
     },
 
@@ -224,13 +242,19 @@ document.addEventListener("alpine:init", () => {
     setupNavbar() {
       const navbar = document.querySelector(".navbar");
       if (!navbar) return;
-      window.addEventListener("scroll", () => {
-        if (window.scrollY > 50) {
-          navbar.classList.add("scrolled");
-        } else {
-          navbar.classList.remove("scrolled");
-        }
-      });
+      let ticking = false;
+      window.addEventListener(
+        "scroll",
+        () => {
+          if (ticking) return;
+          ticking = true;
+          requestAnimationFrame(() => {
+            navbar.classList.toggle("scrolled", window.scrollY > 50);
+            ticking = false;
+          });
+        },
+        { passive: true }
+      );
     },
 
     // Smooth scroll to section

@@ -558,6 +558,10 @@ video {
   pointer-events: none;
 }
 
+.visible {
+  visibility: visible;
+}
+
 .fixed {
   position: fixed;
 }
@@ -584,6 +588,10 @@ video {
 
 .right-3 {
   right: 0.75rem;
+}
+
+.top-1 {
+  top: 0.25rem;
 }
 
 .top-1\/2 {
@@ -629,6 +637,10 @@ video {
 
 .me-1 {
   margin-inline-end: 0.25rem;
+}
+
+.mt-0 {
+  margin-top: 0px;
 }
 
 .mt-0\.5 {
@@ -707,12 +719,20 @@ video {
   height: 2rem;
 }
 
+.w-1 {
+  width: 0.25rem;
+}
+
 .w-1\/2 {
   width: 50%;
 }
 
 .w-16 {
   width: 4rem;
+}
+
+.w-2 {
+  width: 0.5rem;
 }
 
 .w-2\/3 {
@@ -764,6 +784,11 @@ video {
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
+.-translate-y-1 {
+  --tw-translate-y: -0.25rem;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
 .-translate-y-1\/2 {
   --tw-translate-y: -50%;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
@@ -789,8 +814,16 @@ video {
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
+.transform {
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
 .cursor-pointer {
   cursor: pointer;
+}
+
+.resize {
+  resize: both;
 }
 
 .grid-cols-1 {
@@ -885,6 +918,11 @@ video {
 
 .border-t {
   border-top-width: 1px;
+}
+
+.bg-black {
+  --tw-bg-opacity: 1;
+  background-color: rgb(0 0 0 / var(--tw-bg-opacity, 1));
 }
 
 .bg-black\/30 {
@@ -1071,6 +1109,10 @@ video {
 
 .ease-in {
   transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
+}
+
+.ease-in-out {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .ease-out {
