@@ -358,16 +358,35 @@ body {
 /* Admin opt-in: 2 columns on mobile (cafe_info.mobile_grid_cols = 2).
    ≥640px the base rules already give 2+ columns, so only touch small screens. */
 @media (max-width: 639.98px) {
-  .menu-grid.cols-2 { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
-  .menu-grid.cols-2 .menu-card { border-radius: var(--radius-md); contain-intrinsic-size: auto 240px; }
-  .menu-grid.cols-2 .card-image-wrapper { aspect-ratio: 1 / 1; }
-  .menu-grid.cols-2 .card-body { padding: 0.6rem 0.75rem 0.75rem; }
-  .menu-grid.cols-2 .card-name { font-size: 0.9rem; margin-bottom: 0.15rem; }
-  .menu-grid.cols-2 .card-desc { font-size: 0.72rem; -webkit-line-clamp: 1; margin-bottom: 0.5rem; }
-  .menu-grid.cols-2 .card-price { font-size: 0.85rem; }
-  .menu-grid.cols-2 .card-price .unit { font-size: 0.62rem; }
-  .menu-grid.cols-2 .fav-btn { width: 30px; height: 30px; }
-  .menu-grid.cols-2 .badge-featured { font-size: 0.55rem; padding: 0.15rem 0.5rem; top: 0.5rem; right: 0.5rem; }
+  .menu-grid.cols-2 { grid-template-columns: repeat(2, 1fr); gap: 0.6rem; }
+  .menu-grid.cols-2 .menu-card { border-radius: var(--radius-md); contain-intrinsic-size: auto 170px; }
+  /* 4:3 instead of 1:1 — noticeably less vertical space per card */
+  .menu-grid.cols-2 .card-image-wrapper { aspect-ratio: 4 / 3; }
+  .menu-grid.cols-2 .card-body { padding: 0.45rem 0.6rem 0.55rem; }
+  .menu-grid.cols-2 .card-name { font-size: 0.85rem; margin-bottom: 0.1rem; }
+  .menu-grid.cols-2 .card-desc {
+    font-size: 0.65rem;
+    line-height: 1.45;
+    -webkit-line-clamp: 2;
+    margin-bottom: 0.35rem;
+  }
+  .menu-grid.cols-2 .card-price { font-size: 0.8rem; }
+  .menu-grid.cols-2 .card-price .unit { font-size: 0.6rem; }
+  .menu-grid.cols-2 .fav-btn { width: 26px; height: 26px; }
+  .menu-grid.cols-2 .badge-featured { font-size: 0.5rem; padding: 0.1rem 0.45rem; top: 0.4rem; right: 0.4rem; }
+}
+
+/* Mobile density: tighter section rhythm so the menu starts higher on the screen */
+@media (max-width: 639.98px) {
+  section#featured,
+  section#menu {
+    padding-top: 2.25rem;
+    padding-bottom: 2.25rem;
+  }
+  section#featured .section-subtitle,
+  section#menu .section-subtitle { margin-bottom: 1.25rem; }
+  section#menu .chip-container { margin-bottom: 1.25rem; }
+  .menu-grid { gap: 1rem; }
 }
 
 .menu-card {
