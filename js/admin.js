@@ -71,6 +71,7 @@ document.addEventListener("alpine:init", () => {
       instagram: "",
       telegram: "",
       hours_fa: "",
+      mobile_grid_cols: 1,
     },
 
     // Init
@@ -413,6 +414,7 @@ document.addEventListener("alpine:init", () => {
         instagram: this.cafeInfo.instagram || "",
         telegram: this.cafeInfo.telegram || "",
         hours_fa: this.cafeInfo.hours_fa || "",
+        mobile_grid_cols: Number(this.cafeInfo.mobile_grid_cols) === 2 ? 2 : 1,
       };
       this.showCafeInfoModal = true;
     },
@@ -457,22 +459,27 @@ document.addEventListener("alpine:init", () => {
     },
 
     // Drag & drop reordering
-    dragStartIndex: null,
+    // Items are tracked by identity (not index): the products table renders
+    // filteredProducts, so row indexes don't match this.products when searching.
+    dragStartItem: null,
 
-    dragStart(index) {
-      this.dragStartIndex = index;
+    dragStart(item) {
+      this.dragStartItem = item;
     },
 
     dragOver(event) {
       event.preventDefault();
     },
 
-    async drop(index) {
-      if (this.dragStartIndex === null || this.dragStartIndex === index) return;
+    async drop(targetItem) {
+      if (!this.dragStartItem || this.dragStartItem === targetItem) return;
       const items =
         this.activePage === "products" ? this.products : this.categories;
-      const [moved] = items.splice(this.dragStartIndex, 1);
-      items.splice(index, 0, moved);
+      const from = items.indexOf(this.dragStartItem);
+      const to = items.indexOf(targetItem);
+      if (from === -1 || to === -1) return;
+      const [moved] = items.splice(from, 1);
+      items.splice(to, 0, moved);
       items.forEach((item, i) => (item.order = i));
       try {
         for (const item of items) {
@@ -486,7 +493,7 @@ document.addEventListener("alpine:init", () => {
       } catch {
         this.toast("به‌روزرسانی ترتیب ناموفق بود", "error");
       }
-      this.dragStartIndex = null;
+      this.dragStartItem = null;
     },
 
     // Reset to defaults

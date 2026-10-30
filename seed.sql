@@ -51,6 +51,9 @@ CREATE TABLE IF NOT EXISTS public.cafe_info (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Column for existing installs: mobile product grid density (1 = single column, 2 = two columns)
+ALTER TABLE public.cafe_info ADD COLUMN IF NOT EXISTS mobile_grid_cols SMALLINT NOT NULL DEFAULT 1;
+
 -- 2. Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_products_search ON public.products USING gin (search_vector);
 CREATE INDEX IF NOT EXISTS idx_products_category ON public.products (category_id);

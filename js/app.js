@@ -46,6 +46,7 @@ document.addEventListener("alpine:init", () => {
       this.loadFavorites();
       this.loadDarkMode();
       this.trackVisit();
+      this.updateSeo();
       this.isLoaded = true;
       this.$nextTick(() => this.observeFadeIns());
       // 2) Revalidate in background (parallel fetches, then refresh UI).
@@ -77,6 +78,59 @@ document.addEventListener("alpine:init", () => {
       this.cafeInfo = info;
       this.categories.sort((a, b) => a.order - b.order);
       this.products.sort((a, b) => a.order - b.order);
+      this.updateSeo();
+    },
+
+    // SEO: keep <title>, meta description, OG tags and JSON-LD in sync with
+    // the admin-managed cafe info (crawlers that render JS pick this up).
+    updateSeo() {
+      const info = this.cafeInfo || {};
+      const name = info.name || "کافه آی‌چای";
+      const tagline = info.tagline || "تجربه‌ای ناب از طعم و آرامش";
+      const desc = "منوی آنلاین " + name + ": " + tagline;
+      document.title = name + " — منوی آنلاین قهوه، چای و دسر | تهران";
+
+      const setMeta = (selector, attr, value) => {
+        const el = document.querySelector(selector);
+        if (el && value) el.setAttribute(attr, value);
+      };
+      setMeta('meta[name="description"]', "content", desc);
+      setMeta('meta[property="og:title"]', "content", document.title);
+      setMeta('meta[property="og:description"]', "content", desc);
+      setMeta('meta[property="og:site_name"]', "content", name);
+      setMeta('meta[name="twitter:title"]', "content", document.title);
+      setMeta('meta[name="twitter:description"]', "content", desc);
+
+      const faToEn = (s) =>
+        String(s || "").replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d));
+      const digits = faToEn(info.phone).replace(/\D/g, "");
+      const phoneE164 = digits
+        ? (digits.startsWith("0") ? "+98" + digits.slice(1) : "+" + digits)
+        : null;
+
+      const sameAs = [];
+      if (info.instagram)
+        sameAs.push("https://instagram.com/" + String(info.instagram).replace("@", ""));
+      if (info.telegram)
+        sameAs.push("https://t.me/" + String(info.telegram).replace("@", ""));
+
+      const ld = document.getElementById("ldjson-cafe");
+      if (ld) {
+        try {
+          const data = JSON.parse(ld.textContent);
+          data.name = name;
+          data.slogan = tagline;
+          if (info.about_fa) data.description = info.about_fa;
+          if (phoneE164) data.telephone = phoneE164;
+          if (info.address_fa)
+            data.address.streetAddress = info.address_fa;
+          if (sameAs.length) data.sameAs = sameAs;
+          if (info.logo_url) data.logo = info.logo_url;
+          ld.textContent = JSON.stringify(data, null, 2);
+        } catch (e) {
+          console.warn("JSON-LD update failed:", e);
+        }
+      }
     },
 
     // Track site visits
@@ -164,6 +218,11 @@ document.addEventListener("alpine:init", () => {
 
     get featuredProducts() {
       return this.products.filter((p) => p.is_featured);
+    },
+
+    // Admin-controlled mobile density: cafe_info.mobile_grid_cols === 2 → 2 columns on phones
+    get mobileTwoCols() {
+      return Number(this.cafeInfo && this.cafeInfo.mobile_grid_cols) === 2;
     },
 
     // Feedback

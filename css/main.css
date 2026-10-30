@@ -355,6 +355,21 @@ body {
   .menu-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
+/* Admin opt-in: 2 columns on mobile (cafe_info.mobile_grid_cols = 2).
+   ≥640px the base rules already give 2+ columns, so only touch small screens. */
+@media (max-width: 639.98px) {
+  .menu-grid.cols-2 { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+  .menu-grid.cols-2 .menu-card { border-radius: var(--radius-md); contain-intrinsic-size: auto 240px; }
+  .menu-grid.cols-2 .card-image-wrapper { aspect-ratio: 1 / 1; }
+  .menu-grid.cols-2 .card-body { padding: 0.6rem 0.75rem 0.75rem; }
+  .menu-grid.cols-2 .card-name { font-size: 0.9rem; margin-bottom: 0.15rem; }
+  .menu-grid.cols-2 .card-desc { font-size: 0.72rem; -webkit-line-clamp: 1; margin-bottom: 0.5rem; }
+  .menu-grid.cols-2 .card-price { font-size: 0.85rem; }
+  .menu-grid.cols-2 .card-price .unit { font-size: 0.62rem; }
+  .menu-grid.cols-2 .fav-btn { width: 30px; height: 30px; }
+  .menu-grid.cols-2 .badge-featured { font-size: 0.55rem; padding: 0.15rem 0.5rem; top: 0.5rem; right: 0.5rem; }
+}
+
 .menu-card {
   background: var(--cafe-card-bg);
   border: 1px solid var(--cafe-border);

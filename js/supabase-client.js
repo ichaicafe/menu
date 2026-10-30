@@ -183,7 +183,7 @@ const SupaDB = {
     try {
       const { data, error } = await this.client
         .from("cafe_info")
-        .select("id, name, tagline, phone, address_fa, instagram, telegram, hours_fa, about_fa, welcome_fa, logo_url, updated_at")
+        .select("id, name, tagline, phone, address_fa, instagram, telegram, hours_fa, about_fa, welcome_fa, logo_url, mobile_grid_cols, updated_at")
         .limit(1)
         .single();
       if (error) throw error;
@@ -209,6 +209,7 @@ const SupaDB = {
       about_fa: String(info.about_fa || "").slice(0, 2000),
       welcome_fa: String(info.welcome_fa || "").slice(0, 500),
       logo_url: info.logo_url || null,
+      mobile_grid_cols: Number(info.mobile_grid_cols) === 2 ? 2 : 1,
       updated_at: new Date().toISOString(),
     };
     const { data, error } = await this.client
